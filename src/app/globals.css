@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+/* =========================================
+   ProjectWorks Design System
+   Founder: Mohammed Khan
+========================================= */
+
+/* ---------- Brand Design Tokens ---------- */
+:root {
+  --pw-bg: 255 255 255;
+  --pw-text: 15 23 42;
+
+  --pw-primary: 99 102 241;   /* Indigo */
+  --pw-secondary: 236 72 153; /* Pink */
+  --pw-accent: 34 211 238;    /* Cyan */
+
+  --pw-glass: rgba(255, 255, 255, 0.15);
+
+  --pw-radius: 12px;
+  --pw-transition: all 0.3s ease;
+}
+
+/* ---------- Dark Mode Tokens ---------- */
+.dark {
+  --pw-bg: 2 6 23;
+  --pw-text: 226 232 240;
+  --pw-glass: rgba(15, 23, 42, 0.65);
+}
+
+/* =========================================
+   Base Layout Styles
+========================================= */
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background: rgb(var(--pw-bg));
+  color: rgb(var(--pw-text));
+  font-family: "Inter", "Geist", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* =========================================
+   Animated Gradient Background
+========================================= */
+
+.pw-gradient {
+  background: linear-gradient(
+    120deg,
+    rgb(var(--pw-primary)),
+    rgb(var(--pw-secondary)),
+    rgb(var(--pw-accent))
+  );
+  background-size: 300% 300%;
+  animation: pw-gradientMove 10s ease infinite;
+}
+
+@keyframes pw-gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* =========================================
+   Glassmorphism Components
+========================================= */
+
+.pw-glass {
+  background: var(--pw-glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: var(--pw-radius);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.dark .pw-glass {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* =========================================
+   Reusable Utilities
+========================================= */
+
+.pw-transition {
+  transition: var(--pw-transition);
+}
+
+.pw-shadow {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.dark .pw-shadow {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.pw-rounded {
+  border-radius: var(--pw-radius);
+}
+
+.pw-border {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark .pw-border {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
