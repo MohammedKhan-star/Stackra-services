@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "src/app/lib/mail.js", "src/app/layout.jsx", "src/app/components/cards/LeadershipCard.jsx", "src/app/components/cards/ServiceCard.jsx", "src/app/components/cards/ProjectCard.jsx"  ],
   "exclude": ["node_modules"]
 }
