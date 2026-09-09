@@ -7,14 +7,12 @@ import {
 } from "../../lib/mail";
 
 export async function POST(req) {
-  try {
-    // =========================
-    // Read request
-    // =========================
+  console.log("📩 POST /api/contact started");
 
+  try {
     const body = await req.json();
 
-    console.log("📩 Contact request received");
+    console.log("📦 Request received");
 
     const {
       name,
@@ -27,10 +25,15 @@ export async function POST(req) {
     } = body;
 
     // =========================
-    // Validate
+    // VALIDATION
     // =========================
 
-    if (!name || !email || !service || !message) {
+    if (
+      !name?.trim() ||
+      !email?.trim() ||
+      !service?.trim() ||
+      !message?.trim()
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -41,16 +44,35 @@ export async function POST(req) {
       );
     }
 
+    // Basic email validation
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email.trim())) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Please enter a valid email address.",
+        },
+        { status: 400 }
+      );
+    }
+
     // =========================
-    // MongoDB
+    // DATABASE CONNECTION
     // =========================
+
+    console.log("🔄 Connecting to MongoDB...");
 
     try {
       await connectDB();
 
-      console.log("✅ MongoDB connection ready");
-    } catch (dbError) {
-      console.error("❌ DATABASE ERROR:", dbError);
+      console.log("✅ MongoDB connection successful");
+    } catch (error) {
+      console.error(
+        "❌ MongoDB CONNECTION ERROR:",
+        error
+      );
 
       return NextResponse.json(
         {
@@ -63,10 +85,11 @@ export async function POST(req) {
     }
 
     // =========================
-    // Request information
+    // REQUEST INFORMATION
     // =========================
 
-    const forwardedFor = req.headers.get("x-forwarded-for");
+    const forwardedFor =
+      req.headers.get("x-forwarded-for");
 
     const ip =
       forwardedFor?.split(",")[0]?.trim() ||
@@ -77,7 +100,7 @@ export async function POST(req) {
       req.headers.get("user-agent") || "";
 
     // =========================
-    // Save lead
+    // SAVE CONTACT
     // =========================
 
     let contact;
@@ -86,10 +109,10 @@ export async function POST(req) {
       contact = await Contact.create({
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        phone: phone.trim(),
-        company: company.trim(),
+        phone: phone?.trim() || "",
+        company: company?.trim() || "",
         service: service.trim(),
-        budget: budget.trim(),
+        budget: budget?.trim() || "",
         message: message.trim(),
         ip,
         userAgent,
@@ -100,10 +123,10 @@ export async function POST(req) {
         "✅ Contact saved:",
         contact._id.toString()
       );
-    } catch (dbError) {
+    } catch (error) {
       console.error(
         "❌ CONTACT SAVE ERROR:",
-        dbError
+        error
       );
 
       return NextResponse.json(
@@ -117,24 +140,24 @@ export async function POST(req) {
     }
 
     // =========================
-    // Founder email
+    // SEND FOUNDER EMAIL
     // =========================
 
     try {
       await sendFounderEmail(contact);
 
-      console.log("✅ Founder notification sent");
-    } catch (emailError) {
+      console.log("✅ Founder email sent");
+    } catch (error) {
       console.error(
         "⚠️ Founder email failed:",
-        emailError?.message || emailError
+        error?.message || error
       );
 
-      // Do NOT fail the contact submission.
+      // Do NOT fail the form.
     }
 
     // =========================
-    // Customer auto reply
+    // SEND CUSTOMER AUTO REPLY
     // =========================
 
     try {
@@ -143,14 +166,14 @@ export async function POST(req) {
         email: contact.email,
       });
 
-      console.log("✅ Customer auto-reply processed");
-    } catch (emailError) {
+      console.log("✅ Auto-reply sent");
+    } catch (error) {
       console.error(
-        "⚠️ Auto reply failed:",
-        emailError?.message || emailError
+        "⚠️ Auto-reply failed:",
+        error?.message || error
       );
 
-      // Do NOT fail the contact submission.
+      // Do NOT fail the form.
     }
 
     // =========================
@@ -168,7 +191,7 @@ export async function POST(req) {
     );
   } catch (error) {
     console.error(
-      "🔥 CONTACT API FATAL ERROR:",
+      "🔥 CONTACT API ERROR:",
       error
     );
 
