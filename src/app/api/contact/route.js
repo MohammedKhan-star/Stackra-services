@@ -13,9 +13,10 @@ import {
 // ======================================================
 
 export async function POST(req) {
-  console.log("======================================");
-  console.log("📩 POST /api/contact STARTED");
-  console.log("======================================");
+  console.log("==========================================");
+  console.log("📩 STACKRA CONTACT FORM");
+  console.log("POST /api/contact");
+  console.log("==========================================");
 
   try {
     // ====================================================
@@ -28,7 +29,7 @@ export async function POST(req) {
       body = await req.json();
     } catch (error) {
       console.error(
-        "❌ Failed to read request JSON:",
+        "❌ REQUEST JSON ERROR:",
         error
       );
 
@@ -37,12 +38,14 @@ export async function POST(req) {
           success: false,
           message: "Invalid request data.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
     // ====================================================
-    // 2. GET FORM DATA
+    // 2. GET FORM VALUES
     // ====================================================
 
     const {
@@ -56,44 +59,45 @@ export async function POST(req) {
     } = body || {};
 
     // ====================================================
-    // 3. CLEAN FORM DATA
+    // 3. CLEAN VALUES
     // ====================================================
 
-    const cleanName =
-      String(name || "").trim();
+    const clientName = String(name || "").trim();
 
-    const cleanEmail =
-      String(email || "")
-        .trim()
-        .toLowerCase();
+    const clientEmail = String(email || "")
+      .trim()
+      .toLowerCase();
 
-    const cleanPhone =
-      String(phone || "").trim();
+    const clientPhone = String(phone || "").trim();
 
-    const cleanCompany =
-      String(company || "").trim();
+    const clientCompany = String(
+      company || ""
+    ).trim();
 
-    const cleanService =
-      String(service || "").trim();
+    const clientService = String(
+      service || ""
+    ).trim();
 
-    const cleanBudget =
-      String(budget || "").trim();
+    const clientBudget = String(
+      budget || ""
+    ).trim();
 
-    const cleanMessage =
-      String(message || "").trim();
+    const clientMessage = String(
+      message || ""
+    ).trim();
 
     // ====================================================
-    // 4. REQUIRED FIELDS
+    // 4. REQUIRED FIELD VALIDATION
     // ====================================================
 
     if (
-      !cleanName ||
-      !cleanEmail ||
-      !cleanService ||
-      !cleanMessage
+      !clientName ||
+      !clientEmail ||
+      !clientService ||
+      !clientMessage
     ) {
       console.log(
-        "⚠️ Required fields missing"
+        "⚠️ Required fields are missing"
       );
 
       return NextResponse.json(
@@ -102,21 +106,23 @@ export async function POST(req) {
           message:
             "Please fill in Name, Email, Service and Project Details.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
     // ====================================================
-    // 5. VALIDATE EMAIL
+    // 5. EMAIL VALIDATION
     // ====================================================
 
     const emailRegex =
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!emailRegex.test(cleanEmail)) {
+    if (!emailRegex.test(clientEmail)) {
       console.log(
-        "⚠️ Invalid email:",
-        cleanEmail
+        "⚠️ Invalid client email:",
+        clientEmail
       );
 
       return NextResponse.json(
@@ -125,16 +131,24 @@ export async function POST(req) {
           message:
             "Please enter a valid email address.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
-    console.log("👤 Client:", cleanName);
-    console.log("📧 Client email:", cleanEmail);
-    console.log("🛠️ Service:", cleanService);
+    console.log("👤 Client:", clientName);
+    console.log(
+      "📧 Client email:",
+      clientEmail
+    );
+    console.log(
+      "🛠️ Service:",
+      clientService
+    );
 
     // ====================================================
-    // 6. CONNECT DATABASE
+    // 6. CONNECT TO DATABASE
     // ====================================================
 
     console.log(
@@ -145,11 +159,11 @@ export async function POST(req) {
       await connectDB();
 
       console.log(
-        "✅ MongoDB connected"
+        "✅ MongoDB connected successfully"
       );
     } catch (error) {
       console.error(
-        "❌ MongoDB connection failed:",
+        "❌ MONGODB CONNECTION ERROR:",
         error
       );
 
@@ -159,7 +173,9 @@ export async function POST(req) {
           message:
             "Database connection failed. Please try again later.",
         },
-        { status: 503 }
+        {
+          status: 503,
+        }
       );
     }
 
@@ -181,32 +197,60 @@ export async function POST(req) {
       req.headers.get("user-agent") || "";
 
     // ====================================================
-    // 8. SAVE CONTACT
+    // 8. SAVE INQUIRY
     // ====================================================
 
     let contact;
 
     try {
       contact = await Contact.create({
-        name: cleanName,
-        email: cleanEmail,
-        phone: cleanPhone,
-        company: cleanCompany,
-        service: cleanService,
-        budget: cleanBudget,
-        message: cleanMessage,
+        name: clientName,
+
+        // IMPORTANT:
+        // This is the client's actual email.
+        email: clientEmail,
+
+        phone: clientPhone,
+
+        company: clientCompany,
+
+        service: clientService,
+
+        budget: clientBudget,
+
+        message: clientMessage,
+
         ip,
+
         userAgent,
+
         status: "New",
       });
 
       console.log(
-        "✅ Inquiry saved:",
+        "=========================================="
+      );
+
+      console.log(
+        "✅ INQUIRY SAVED"
+      );
+
+      console.log(
+        "Contact ID:",
         contact._id.toString()
+      );
+
+      console.log(
+        "Client Email:",
+        contact.email
+      );
+
+      console.log(
+        "=========================================="
       );
     } catch (error) {
       console.error(
-        "❌ Contact save failed:",
+        "❌ CONTACT DATABASE SAVE ERROR:",
         error
       );
 
@@ -216,38 +260,62 @@ export async function POST(req) {
           message:
             "Unable to save your inquiry. Please try again.",
         },
-        { status: 500 }
+        {
+          status: 500,
+        }
       );
     }
 
     // ====================================================
-    // 9. SEND FOUNDER EMAIL
+    // 9. SEND ADMIN / FOUNDER EMAIL
     // ====================================================
 
     let founderEmailSent = false;
+    let founderEmailError = null;
 
     try {
       console.log(
-        "📨 Sending inquiry to:",
-        process.env.ADMIN_EMAIL
+        "📨 Sending inquiry to STACKRA admin..."
       );
 
-      const result =
+      const founderResult =
         await sendFounderEmail(contact);
 
-      founderEmailSent =
-        result?.success === true;
+      if (
+        founderResult &&
+        founderResult.success === true
+      ) {
+        founderEmailSent = true;
 
-      console.log(
-        "✅ Founder notification sent"
-      );
+        console.log(
+          "✅ ADMIN EMAIL SENT"
+        );
+
+        console.log(
+          "Admin:",
+          process.env.ADMIN_EMAIL
+        );
+      } else {
+        founderEmailError =
+          founderResult?.error ||
+          "Founder email was not sent.";
+
+        console.error(
+          "❌ ADMIN EMAIL NOT SENT:",
+          founderEmailError
+        );
+      }
     } catch (error) {
+      founderEmailError =
+        error?.message ||
+        "Founder email failed.";
+
       console.error(
-        "❌ Founder notification failed:",
-        error?.message || error
+        "❌ ADMIN EMAIL ERROR:",
+        founderEmailError
       );
 
-      // Do NOT fail the contact submission.
+      // Do not fail the client's form submission.
     }
 
     // ====================================================
@@ -255,52 +323,125 @@ export async function POST(req) {
     // ====================================================
 
     let clientConfirmationSent = false;
+    let clientConfirmationError = null;
 
     try {
       console.log(
-        "📧 Sending confirmation to CLIENT:",
-        cleanEmail
+        "=========================================="
       );
-
-      const result =
-        await sendAutoReply({
-          name: cleanName,
-          email: cleanEmail,
-        });
-
-      clientConfirmationSent =
-        result?.success === true;
 
       console.log(
-        "✅ CLIENT CONFIRMATION SENT:",
-        cleanEmail
-      );
-    } catch (error) {
-      console.error(
-        "❌ CLIENT CONFIRMATION FAILED:",
-        error?.message || error
+        "📧 SENDING CLIENT CONFIRMATION"
       );
 
-      // Do NOT fail the contact submission.
+      console.log(
+        "CLIENT EMAIL:",
+        clientEmail
+      );
+
+      console.log(
+        "=========================================="
+      );
+
+      const confirmationResult =
+        await sendAutoReply({
+          name: clientName,
+
+          // VERY IMPORTANT:
+          // Send confirmation to the exact
+          // email entered by the client.
+          email: clientEmail,
+        });
+
+      if (
+        confirmationResult &&
+        confirmationResult.success === true
+      ) {
+        clientConfirmationSent = true;
+
+        console.log(
+          "=========================================="
+        );
+
+        console.log(
+          "✅ CLIENT CONFIRMATION SENT"
+        );
+
+        console.log(
+          "TO:",
+          clientEmail
+        );
+
+        console.log(
+          "RESEND ID:",
+          confirmationResult.id
+        );
+
+        console.log(
+          "=========================================="
+        );
+      } else {
+        clientConfirmationError =
+          confirmationResult?.error ||
+          "Client confirmation was not sent.";
+
+        console.error(
+          "❌ CLIENT CONFIRMATION NOT SENT:",
+          clientConfirmationError
+        );
+      }
+    } catch (error) {
+      clientConfirmationError =
+        error?.message ||
+        "Client confirmation failed.";
+
+      console.error(
+        "❌ CLIENT CONFIRMATION ERROR:",
+        clientConfirmationError
+      );
+
+      // Do not fail the client's form submission.
     }
 
     // ====================================================
-    // 11. SUCCESS
+    // 11. FINAL LOG
     // ====================================================
 
-    console.log("======================================");
     console.log(
-      "✅ CONTACT FORM COMPLETED"
+      "=========================================="
     );
+
     console.log(
-      "Founder email:",
+      "✅ CONTACT PROCESS COMPLETED"
+    );
+
+    console.log(
+      "Client:",
+      clientName
+    );
+
+    console.log(
+      "Client Email:",
+      clientEmail
+    );
+
+    console.log(
+      "Founder Email:",
       founderEmailSent
     );
+
     console.log(
-      "Client confirmation:",
+      "Client Confirmation:",
       clientConfirmationSent
     );
-    console.log("======================================");
+
+    console.log(
+      "=========================================="
+    );
+
+    // ====================================================
+    // 12. RESPONSE TO WEBSITE
+    // ====================================================
 
     return NextResponse.json(
       {
@@ -313,28 +454,43 @@ export async function POST(req) {
           contact._id.toString(),
 
         emailStatus: {
-          founder:
-            founderEmailSent,
+          founder: founderEmailSent,
 
           clientConfirmation:
             clientConfirmationSent,
         },
+
+        // Useful for debugging
+        // Remove these later if you want.
+        clientEmail: clientEmail,
+
+        clientConfirmationError:
+          clientConfirmationError,
       },
-      { status: 201 }
+      {
+        status: 201,
+      }
     );
   } catch (error) {
+    // ====================================================
+    // 13. UNEXPECTED ERROR
+    // ====================================================
+
     console.error(
-      "🔥 CONTACT API ERROR:",
+      "🔥 CONTACT API FATAL ERROR:",
       error
     );
 
     return NextResponse.json(
       {
         success: false,
+
         message:
           "Unable to submit your inquiry right now. Please try again later.",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }
