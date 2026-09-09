@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -10,112 +11,64 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const categories = [
-  {
-    name: "AI & Machine Learning",
-    description: "Artificial intelligence, machine learning and emerging technologies.",
-    icon: BrainCircuit,
-  },
-  {
-    name: "Software Development",
-    description: "Programming, web development, software engineering and tools.",
-    icon: Code2,
-  },
-  {
-    name: "Business & Technology",
-    description: "Technology-driven business, innovation and digital transformation.",
-    icon: BriefcaseBusiness,
-  },
-  {
-    name: "Computer Science",
-    description: "Core computer science concepts, systems, algorithms and databases.",
-    icon: BookOpen,
-  },
-  {
-    name: "Career & Skills",
-    description: "Practical knowledge and skills for students and technology professionals.",
-    icon: GraduationCap,
-  },
-];
+import {
+  books,
+  categories,
+  getFeaturedBooks,
+  getPopularBooks,
+} from "./data/books";
 
-const featuredBooks = [
-  {
-    title: "Featured Book",
-    author: "STACKRA TECHNOLOGIES",
-    category: "Technology",
-    description:
-      "Explore practical technology knowledge designed for modern learners and builders.",
-    slug: "featured-book",
-  },
-  {
-    title: "AI & The Future",
-    author: "STACKRA TECHNOLOGIES",
-    category: "Artificial Intelligence",
-    description:
-      "Discover the fundamentals of AI and understand how intelligent technologies are shaping the future.",
-    slug: "ai-and-the-future",
-  },
-  {
-    title: "Build With Technology",
-    author: "STACKRA TECHNOLOGIES",
-    category: "Software Development",
-    description:
-      "A practical introduction to building digital products with modern software technologies.",
-    slug: "build-with-technology",
-  },
-];
-
-const latestBooks = [
-  {
-    title: "Latest Technology Guide",
-    category: "Technology",
-    slug: "latest-technology-guide",
-  },
-  {
-    title: "Introduction to Artificial Intelligence",
-    category: "AI & Machine Learning",
-    slug: "introduction-to-ai",
-  },
-  {
-    title: "Modern Software Development",
-    category: "Software Development",
-    slug: "modern-software-development",
-  },
-];
+const featuredBooks = getFeaturedBooks();
+const popularBooks = getPopularBooks();
+const latestBooks = books.slice(0, 6);
 
 export default function BooksPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      {/* HERO */}
+
+      {/* =====================================================
+          HERO
+      ====================================================== */}
       <section className="relative overflow-hidden border-b border-slate-200 bg-slate-950">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(79,70,229,0.25),transparent_35%)]" />
+
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(14,165,233,0.12),transparent_30%)]" />
 
         <div className="relative mx-auto max-w-7xl px-6 py-20 sm:px-8 lg:px-10 lg:py-28">
           <div className="max-w-4xl">
+
+            {/* Brand */}
             <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">
               <Sparkles size={15} />
               STACKRA TECHNOLOGIES
             </div>
 
+            {/* Heading */}
             <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-7xl">
               Knowledge that helps you{" "}
-              <span className="text-indigo-400">build the future.</span>
+              <span className="text-indigo-400">
+                build the future.
+              </span>
             </h1>
 
+            {/* Description */}
             <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
               Welcome to STACKRA Books — a growing digital library of
               technology books, practical guides and learning resources for
-              students, developers, entrepreneurs and technology professionals.
+              students, developers, entrepreneurs and technology
+              professionals.
             </p>
 
-            {/* SEARCH */}
+            {/* Search */}
             <div className="mt-9 flex w-full max-w-2xl flex-col gap-3 sm:flex-row">
               <div className="flex flex-1 items-center rounded-xl border border-white/10 bg-white px-4 py-3.5 shadow-xl">
-                <Search size={19} className="mr-3 shrink-0 text-slate-400" />
+                <Search
+                  size={19}
+                  className="mr-3 shrink-0 text-slate-400"
+                />
 
                 <input
-                  type="text"
+                  type="search"
                   placeholder="Search books, topics or authors..."
                   className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                 />
@@ -130,7 +83,8 @@ export default function BooksPage() {
               </button>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-5 text-sm text-slate-400">
+            {/* Popular topics */}
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-400">
               <span>✓ Technology</span>
               <span>✓ AI</span>
               <span>✓ Programming</span>
@@ -140,9 +94,12 @@ export default function BooksPage() {
         </div>
       </section>
 
-      {/* FEATURED BOOKS */}
+      {/* =====================================================
+          FEATURED BOOKS
+      ====================================================== */}
       <section className="px-6 py-20 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
+
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
@@ -160,7 +117,7 @@ export default function BooksPage() {
 
             <Link
               href="/books"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
             >
               View Library
               <ArrowRight size={17} />
@@ -168,14 +125,20 @@ export default function BooksPage() {
           </div>
 
           <div className="mt-10 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
+
             {featuredBooks.map((book) => (
               <article
-                key={book.slug}
+                key={book.id}
                 className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
+
+                {/* Cover */}
                 <div className="flex h-72 items-center justify-center bg-slate-100 p-8">
-                  <div className="flex h-full w-44 items-center justify-center rounded-lg bg-slate-900 p-6 text-center shadow-2xl transition duration-300 group-hover:scale-105">
-                    <div>
+                  <div className="relative flex h-full w-44 items-center justify-center overflow-hidden rounded-lg bg-slate-950 p-6 text-center shadow-2xl transition duration-300 group-hover:scale-105">
+
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.35),transparent_45%)]" />
+
+                    <div className="relative">
                       <BookOpen
                         size={34}
                         className="mx-auto mb-4 text-indigo-400"
@@ -192,7 +155,9 @@ export default function BooksPage() {
                   </div>
                 </div>
 
+                {/* Details */}
                 <div className="p-6">
+
                   <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
                     {book.category}
                   </span>
@@ -219,13 +184,17 @@ export default function BooksPage() {
                 </div>
               </article>
             ))}
+
           </div>
         </div>
       </section>
 
-      {/* CATEGORIES */}
+      {/* =====================================================
+          CATEGORIES
+      ====================================================== */}
       <section className="border-y border-slate-200 bg-slate-50 px-6 py-20 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
+
           <div className="max-w-2xl">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
               Explore by topic
@@ -234,16 +203,39 @@ export default function BooksPage() {
             <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
               Find knowledge for your next idea.
             </h2>
+
+            <p className="mt-4 leading-7 text-slate-600">
+              Explore books across technology, artificial intelligence,
+              software development, computer science and professional skills.
+            </p>
           </div>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+
             {categories.map((category) => {
-              const Icon = category.icon;
+
+              let Icon = BookOpen;
+
+              if (category === "AI & Machine Learning") {
+                Icon = BrainCircuit;
+              }
+
+              if (category === "Software Development") {
+                Icon = Code2;
+              }
+
+              if (category === "Business & Technology") {
+                Icon = BriefcaseBusiness;
+              }
+
+              if (category === "Career & Skills") {
+                Icon = GraduationCap;
+              }
 
               return (
                 <Link
-                  key={category.name}
-                  href={`/books?category=${encodeURIComponent(category.name)}`}
+                  key={category}
+                  href={`/books?category=${encodeURIComponent(category)}`}
                   className="group rounded-2xl border border-slate-200 bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg"
                 >
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition group-hover:bg-indigo-600 group-hover:text-white">
@@ -251,11 +243,11 @@ export default function BooksPage() {
                   </div>
 
                   <h3 className="mt-5 text-base font-bold text-slate-900">
-                    {category.name}
+                    {category}
                   </h3>
 
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    {category.description}
+                    Explore resources and books in this category.
                   </p>
 
                   <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600">
@@ -265,13 +257,17 @@ export default function BooksPage() {
                 </Link>
               );
             })}
+
           </div>
         </div>
       </section>
 
-      {/* LATEST RELEASES */}
+      {/* =====================================================
+          LATEST RELEASES
+      ====================================================== */}
       <section className="px-6 py-20 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
+
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
               New & Updated
@@ -280,20 +276,30 @@ export default function BooksPage() {
             <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
               Latest Releases
             </h2>
+
+            <p className="mt-3 text-slate-600">
+              Discover the latest additions to the STACKRA Books library.
+            </p>
           </div>
 
-          <div className="mt-10 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
+          <div className="mt-10 divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+
             {latestBooks.map((book, index) => (
               <Link
-                key={book.slug}
+                key={book.id}
                 href={`/books/${book.slug}`}
                 className="group flex items-center gap-5 p-5 transition hover:bg-slate-50 sm:p-6"
               >
-                <div className="flex h-16 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-900">
-                  <BookOpen size={23} className="text-indigo-300" />
+
+                <div className="flex h-16 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-950">
+                  <BookOpen
+                    size={23}
+                    className="text-indigo-300"
+                  />
                 </div>
 
                 <div className="min-w-0 flex-1">
+
                   <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
                     {book.category}
                   </p>
@@ -303,8 +309,9 @@ export default function BooksPage() {
                   </h3>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    STACKRA TECHNOLOGIES
+                    {book.author}
                   </p>
+
                 </div>
 
                 <div className="hidden text-sm font-semibold text-indigo-600 sm:flex sm:items-center sm:gap-2">
@@ -318,16 +325,86 @@ export default function BooksPage() {
                 <span className="text-xs font-medium text-slate-400">
                   #{String(index + 1).padStart(2, "0")}
                 </span>
+
               </Link>
             ))}
+
           </div>
         </div>
       </section>
 
-      {/* AUTHORS */}
+      {/* =====================================================
+          POPULAR BOOKS
+      ====================================================== */}
+      {popularBooks.length > 0 && (
+        <section className="border-y border-slate-200 bg-slate-50 px-6 py-20 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-7xl">
+
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
+                Reader Picks
+              </p>
+
+              <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+                Popular Books
+              </h2>
+
+              <p className="mt-3 text-slate-600">
+                Explore resources selected as popular reads in the STACKRA
+                library.
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+
+              {popularBooks.map((book) => (
+                <Link
+                  key={book.id}
+                  href={`/books/${book.slug}`}
+                  className="group rounded-2xl border border-slate-200 bg-white p-5 transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+                >
+                  <div className="flex h-48 items-center justify-center rounded-xl bg-slate-950">
+                    <BookOpen
+                      size={38}
+                      className="text-indigo-400"
+                    />
+                  </div>
+
+                  <p className="mt-5 text-xs font-bold uppercase tracking-wider text-indigo-600">
+                    {book.category}
+                  </p>
+
+                  <h3 className="mt-2 font-bold text-slate-900">
+                    {book.title}
+                  </h3>
+
+                  <p className="mt-2 text-sm text-slate-500">
+                    {book.author}
+                  </p>
+
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600">
+                    View Book
+                    <ArrowRight
+                      size={15}
+                      className="transition group-hover:translate-x-1"
+                    />
+                  </span>
+                </Link>
+              ))}
+
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* =====================================================
+          AUTHORS
+      ====================================================== */}
       <section className="bg-slate-950 px-6 py-20 text-white sm:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
+
           <div className="grid gap-10 lg:grid-cols-[1fr_2fr] lg:items-center">
+
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-400">
                 Authors & Creators
@@ -345,38 +422,51 @@ export default function BooksPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
+
               <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-600 font-bold">
                   ST
                 </div>
 
-                <h3 className="mt-5 font-bold">STACKRA TECHNOLOGIES</h3>
+                <h3 className="mt-5 font-bold">
+                  STACKRA TECHNOLOGIES
+                </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-400">
                   Technology, AI and software knowledge for the next
                   generation of builders.
                 </p>
+
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
                   <GraduationCap size={22} />
                 </div>
 
-                <h3 className="mt-5 font-bold">Future Contributors</h3>
+                <h3 className="mt-5 font-bold">
+                  Future Contributors
+                </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-400">
                   A growing community of authors and technology educators.
                 </p>
+
               </div>
+
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
+      {/* =====================================================
+          CTA
+      ====================================================== */}
       <section className="px-6 py-20 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl bg-indigo-600 px-7 py-14 text-center shadow-2xl sm:px-12">
+
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-200">
             Keep Learning
           </p>
@@ -397,8 +487,11 @@ export default function BooksPage() {
             Explore STACKRA Books
             <ArrowRight size={17} />
           </Link>
+
         </div>
       </section>
+
     </main>
   );
 }
+
