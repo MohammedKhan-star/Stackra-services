@@ -46,13 +46,13 @@ const ecosystemLinks = [
   },
     {
     name: "STACKRA Books",
-    description: "Learn technology and build future skills",
+    description: "Technology books, guides & learning resources",
     href: "/books",
     icon: BookOpen,
   },
     {
     name: "STACKRA Blogs",
-    description: "Learn technology and build future skills",
+    description: "Technology insights, ideas & industry updates",
     href: "/blogs",
     icon: Newspaper,
   },
