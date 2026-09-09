@@ -62,7 +62,7 @@ return ( <section className="relative min-h-screen flex items-center overflow-hi
       <div className="mt-10 flex flex-col sm:flex-row gap-4">
 
         <Link
-          href="/contact"
+          href="/#contact"
           className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-indigo-600 text-white font-semibold transition hover:bg-indigo-500 hover:scale-[1.02]"
         >
           Start Your Project
@@ -70,7 +70,7 @@ return ( <section className="relative min-h-screen flex items-center overflow-hi
         </Link>
 
         <Link
-          href="/services"
+          href="/#services"
           className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl border border-slate-600 text-white font-semibold transition hover:bg-white/10"
         >
           Explore Our Services
