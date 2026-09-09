@@ -13,9 +13,9 @@ import {
 // ======================================================
 
 export async function POST(req) {
-  console.log("====================================");
-  console.log("📩 POST /api/contact");
-  console.log("====================================");
+  console.log("======================================");
+  console.log("📩 POST /api/contact STARTED");
+  console.log("======================================");
 
   try {
     // ====================================================
@@ -27,7 +27,10 @@ export async function POST(req) {
     try {
       body = await req.json();
     } catch (error) {
-      console.error("❌ Invalid JSON:", error);
+      console.error(
+        "❌ Failed to read request JSON:",
+        error
+      );
 
       return NextResponse.json(
         {
@@ -37,8 +40,6 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-
-    console.log("📦 Request received");
 
     // ====================================================
     // 2. GET FORM DATA
@@ -55,27 +56,34 @@ export async function POST(req) {
     } = body || {};
 
     // ====================================================
-    // 3. CLEAN DATA
+    // 3. CLEAN FORM DATA
     // ====================================================
 
-    const cleanName = String(name || "").trim();
+    const cleanName =
+      String(name || "").trim();
 
-    const cleanEmail = String(email || "")
-      .trim()
-      .toLowerCase();
+    const cleanEmail =
+      String(email || "")
+        .trim()
+        .toLowerCase();
 
-    const cleanPhone = String(phone || "").trim();
+    const cleanPhone =
+      String(phone || "").trim();
 
-    const cleanCompany = String(company || "").trim();
+    const cleanCompany =
+      String(company || "").trim();
 
-    const cleanService = String(service || "").trim();
+    const cleanService =
+      String(service || "").trim();
 
-    const cleanBudget = String(budget || "").trim();
+    const cleanBudget =
+      String(budget || "").trim();
 
-    const cleanMessage = String(message || "").trim();
+    const cleanMessage =
+      String(message || "").trim();
 
     // ====================================================
-    // 4. REQUIRED FIELD VALIDATION
+    // 4. REQUIRED FIELDS
     // ====================================================
 
     if (
@@ -84,7 +92,9 @@ export async function POST(req) {
       !cleanService ||
       !cleanMessage
     ) {
-      console.log("⚠️ Required fields missing");
+      console.log(
+        "⚠️ Required fields missing"
+      );
 
       return NextResponse.json(
         {
@@ -97,7 +107,7 @@ export async function POST(req) {
     }
 
     // ====================================================
-    // 5. EMAIL VALIDATION
+    // 5. VALIDATE EMAIL
     // ====================================================
 
     const emailRegex =
@@ -105,7 +115,7 @@ export async function POST(req) {
 
     if (!emailRegex.test(cleanEmail)) {
       console.log(
-        "⚠️ Invalid client email:",
+        "⚠️ Invalid email:",
         cleanEmail
       );
 
@@ -124,16 +134,18 @@ export async function POST(req) {
     console.log("🛠️ Service:", cleanService);
 
     // ====================================================
-    // 6. CONNECT TO MONGODB
+    // 6. CONNECT DATABASE
     // ====================================================
 
-    console.log("🔄 Connecting to MongoDB...");
+    console.log(
+      "🔄 Connecting to MongoDB..."
+    );
 
     try {
       await connectDB();
 
       console.log(
-        "✅ MongoDB connected successfully"
+        "✅ MongoDB connected"
       );
     } catch (error) {
       console.error(
@@ -159,7 +171,9 @@ export async function POST(req) {
       req.headers.get("x-forwarded-for");
 
     const ip =
-      forwardedFor?.split(",")[0]?.trim() ||
+      forwardedFor
+        ?.split(",")[0]
+        ?.trim() ||
       req.headers.get("x-real-ip") ||
       "";
 
@@ -167,7 +181,7 @@ export async function POST(req) {
       req.headers.get("user-agent") || "";
 
     // ====================================================
-    // 8. SAVE INQUIRY
+    // 8. SAVE CONTACT
     // ====================================================
 
     let contact;
@@ -187,12 +201,12 @@ export async function POST(req) {
       });
 
       console.log(
-        "✅ Contact saved successfully:",
+        "✅ Inquiry saved:",
         contact._id.toString()
       );
     } catch (error) {
       console.error(
-        "❌ CONTACT SAVE ERROR:",
+        "❌ Contact save failed:",
         error
       );
 
@@ -207,44 +221,40 @@ export async function POST(req) {
     }
 
     // ====================================================
-    // 9. EMAIL STATUS
+    // 9. SEND FOUNDER EMAIL
     // ====================================================
 
     let founderEmailSent = false;
-    let clientAutoReplySent = false;
-
-    // ====================================================
-    // 10. SEND FOUNDER / ADMIN EMAIL
-    // ====================================================
 
     try {
       console.log(
-        "📨 Sending founder notification to:",
+        "📨 Sending inquiry to:",
         process.env.ADMIN_EMAIL
       );
 
-      const founderResult =
+      const result =
         await sendFounderEmail(contact);
 
       founderEmailSent =
-        founderResult?.success === true;
+        result?.success === true;
 
       console.log(
-        "✅ Founder notification completed"
+        "✅ Founder notification sent"
       );
     } catch (error) {
       console.error(
-        "❌ Founder email failed:",
+        "❌ Founder notification failed:",
         error?.message || error
       );
 
-      // IMPORTANT:
-      // Do NOT fail the customer's form submission.
+      // Do NOT fail the contact submission.
     }
 
     // ====================================================
-    // 11. SEND CLIENT CONFIRMATION
+    // 10. SEND CLIENT CONFIRMATION
     // ====================================================
+
+    let clientConfirmationSent = false;
 
     try {
       console.log(
@@ -252,44 +262,45 @@ export async function POST(req) {
         cleanEmail
       );
 
-      const autoReplyResult =
+      const result =
         await sendAutoReply({
           name: cleanName,
           email: cleanEmail,
         });
 
-      clientAutoReplySent =
-        autoReplyResult?.success === true;
+      clientConfirmationSent =
+        result?.success === true;
 
       console.log(
-        "✅ Client confirmation completed:",
+        "✅ CLIENT CONFIRMATION SENT:",
         cleanEmail
       );
     } catch (error) {
       console.error(
-        "❌ Client auto-reply failed:",
+        "❌ CLIENT CONFIRMATION FAILED:",
         error?.message || error
       );
 
-      // IMPORTANT:
-      // Do NOT fail the customer's form submission.
+      // Do NOT fail the contact submission.
     }
 
     // ====================================================
-    // 12. FINAL SUCCESS RESPONSE
+    // 11. SUCCESS
     // ====================================================
 
-    console.log("====================================");
-    console.log("✅ CONTACT SUBMISSION COMPLETED");
+    console.log("======================================");
+    console.log(
+      "✅ CONTACT FORM COMPLETED"
+    );
     console.log(
       "Founder email:",
       founderEmailSent
     );
     console.log(
       "Client confirmation:",
-      clientAutoReplySent
+      clientConfirmationSent
     );
-    console.log("====================================");
+    console.log("======================================");
 
     return NextResponse.json(
       {
@@ -302,20 +313,18 @@ export async function POST(req) {
           contact._id.toString(),
 
         emailStatus: {
-          founder: founderEmailSent,
+          founder:
+            founderEmailSent,
+
           clientConfirmation:
-            clientAutoReplySent,
+            clientConfirmationSent,
         },
       },
       { status: 201 }
     );
   } catch (error) {
-    // ====================================================
-    // 13. UNEXPECTED ERROR
-    // ====================================================
-
     console.error(
-      "🔥 CONTACT API FATAL ERROR:",
+      "🔥 CONTACT API ERROR:",
       error
     );
 
