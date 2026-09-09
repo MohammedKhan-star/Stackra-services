@@ -8,7 +8,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 // verified in your Resend account.
 const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL ||
-  "STACKRA TECHNOLOGIES <hello@stackratechnologies.com>";
+  "STACKRA TECHNOLOGIES <stackratechnologies@gmail.com>";
 
 const resend = RESEND_API_KEY
   ? new Resend(RESEND_API_KEY)
