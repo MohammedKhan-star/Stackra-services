@@ -7,7 +7,9 @@ import { Resend } from "resend";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
-// This MUST be a sender/domain approved by Resend.
+// For testing with Resend.
+// For production, replace this with a sender from a
+// domain verified in your Resend account.
 const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL ||
   "STACKRA TECHNOLOGIES <onboarding@resend.dev>";
@@ -29,24 +31,24 @@ function escapeHTML(text = "") {
     .replace(/'/g, "&#039;");
 }
 
-function validateEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-    String(email || "").trim()
-  );
-}
-
 function cleanEmail(email) {
   return String(email || "")
     .trim()
     .toLowerCase();
 }
 
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    cleanEmail(email)
+  );
+}
+
 // ======================================================
-// FOUNDER / ADMIN EMAIL
-// Client inquiry → stackratechnologies@gmail.com
+// FOUNDER EMAIL
+// Sends the client's inquiry to STACKRA
 // ======================================================
 
-export async function sendFounderEmail(data) {
+export async function sendFounderEmail(contact) {
   if (!resend) {
     throw new Error("RESEND_API_KEY is missing");
   }
@@ -56,41 +58,43 @@ export async function sendFounderEmail(data) {
   }
 
   const adminEmail = cleanEmail(ADMIN_EMAIL);
-  const clientEmail = cleanEmail(data?.email);
+  const clientEmail = cleanEmail(contact?.email);
 
   if (!validateEmail(adminEmail)) {
-    throw new Error(`Invalid ADMIN_EMAIL: ${adminEmail}`);
+    throw new Error(
+      `Invalid ADMIN_EMAIL: ${adminEmail}`
+    );
   }
 
   if (!validateEmail(clientEmail)) {
-    throw new Error(`Invalid client email: ${clientEmail}`);
+    throw new Error(
+      `Invalid client email: ${clientEmail}`
+    );
   }
 
-  console.log("====================================");
-  console.log("📨 FOUNDER EMAIL");
+  console.log("📨 Sending founder email...");
   console.log("FROM:", FROM_EMAIL);
   console.log("TO:", adminEmail);
-  console.log("REPLY TO:", clientEmail);
-  console.log("====================================");
+  console.log("REPLY-TO:", clientEmail);
 
-  const { data: result, error } =
+  const { data, error } =
     await resend.emails.send({
       from: FROM_EMAIL,
 
-      // Founder/admin receives the inquiry
+      // YOU RECEIVE THE INQUIRY HERE
       to: [adminEmail],
 
-      // Reply button goes directly to client
+      // When you click Reply, it replies to the client
       replyTo: clientEmail,
 
-      subject: `New Project Inquiry — ${data.name}`,
+      subject: `New Project Inquiry — ${contact.name}`,
 
       html: `
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body style="
@@ -104,15 +108,16 @@ export async function sendFounderEmail(data) {
     max-width:700px;
     margin:40px auto;
     background:#ffffff;
+    border:1px solid #e2e8f0;
     border-radius:16px;
     overflow:hidden;
-    border:1px solid #e2e8f0;
   ">
 
     <!-- HEADER -->
+
     <div style="
-      padding:32px;
       background:#0f172a;
+      padding:30px;
       color:#ffffff;
     ">
 
@@ -134,10 +139,11 @@ export async function sendFounderEmail(data) {
     </div>
 
     <!-- CONTENT -->
+
     <div style="padding:32px;">
 
       <h2 style="
-        margin:0 0 12px;
+        margin-top:0;
         color:#0f172a;
       ">
         New website inquiry received
@@ -147,11 +153,12 @@ export async function sendFounderEmail(data) {
         color:#64748b;
         line-height:1.7;
       ">
-        A potential client has submitted a project
-        inquiry through the STACKRA TECHNOLOGIES website.
+        A new project inquiry has been submitted
+        through the STACKRA TECHNOLOGIES website.
       </p>
 
       <!-- CLIENT DETAILS -->
+
       <div style="
         margin-top:25px;
         border:1px solid #e2e8f0;
@@ -160,7 +167,7 @@ export async function sendFounderEmail(data) {
       ">
 
         <div style="
-          padding:14px 18px;
+          padding:15px 18px;
           background:#f8fafc;
           border-bottom:1px solid #e2e8f0;
         ">
@@ -171,7 +178,7 @@ export async function sendFounderEmail(data) {
 
           <p>
             <strong>Name:</strong>
-            ${escapeHTML(data.name)}
+            ${escapeHTML(contact.name)}
           </p>
 
           <p>
@@ -186,22 +193,22 @@ export async function sendFounderEmail(data) {
 
           <p>
             <strong>Phone:</strong>
-            ${escapeHTML(data.phone || "-")}
+            ${escapeHTML(contact.phone || "-")}
           </p>
 
           <p>
             <strong>Company:</strong>
-            ${escapeHTML(data.company || "-")}
+            ${escapeHTML(contact.company || "-")}
           </p>
 
           <p>
             <strong>Service:</strong>
-            ${escapeHTML(data.service || "-")}
+            ${escapeHTML(contact.service || "-")}
           </p>
 
           <p style="margin-bottom:0;">
             <strong>Budget:</strong>
-            ${escapeHTML(data.budget || "-")}
+            ${escapeHTML(contact.budget || "-")}
           </p>
 
         </div>
@@ -209,6 +216,7 @@ export async function sendFounderEmail(data) {
       </div>
 
       <!-- PROJECT DETAILS -->
+
       <div style="
         margin-top:25px;
         padding:22px;
@@ -216,7 +224,7 @@ export async function sendFounderEmail(data) {
         border-radius:12px;
       ">
 
-        <strong style="color:#0f172a;">
+        <strong>
           Project Details
         </strong>
 
@@ -225,22 +233,22 @@ export async function sendFounderEmail(data) {
           color:#475569;
           line-height:1.8;
         ">
-          ${escapeHTML(data.message || "-")}
+          ${escapeHTML(contact.message || "-")}
         </p>
 
       </div>
 
       <!-- FOOTER -->
+
       <div style="
         margin-top:30px;
-        padding-top:22px;
+        padding-top:20px;
         border-top:1px solid #e2e8f0;
         color:#64748b;
         font-size:13px;
-        line-height:1.6;
       ">
 
-        STACKRA TECHNOLOGIES<br />
+        STACKRA TECHNOLOGIES<br>
         Software • AI • Digital Solutions
 
       </div>
@@ -256,7 +264,7 @@ export async function sendFounderEmail(data) {
 
   if (error) {
     console.error(
-      "❌ FOUNDER EMAIL ERROR:",
+      "❌ Founder email failed:",
       error
     );
 
@@ -265,18 +273,19 @@ export async function sendFounderEmail(data) {
 
   console.log(
     "✅ Founder email sent:",
-    result?.id
+    data?.id
   );
 
   return {
     success: true,
-    id: result?.id,
+    id: data?.id,
+    recipient: adminEmail,
   };
 }
 
 // ======================================================
-// CLIENT AUTO-REPLY
-// Client inquiry → client email
+// CLIENT CONFIRMATION EMAIL
+// Sends confirmation ONLY to the client's email
 // ======================================================
 
 export async function sendAutoReply({
@@ -295,31 +304,33 @@ export async function sendAutoReply({
     );
   }
 
-  console.log("====================================");
-  console.log("📧 CLIENT AUTO-REPLY");
+  console.log("📧 Sending CLIENT confirmation...");
   console.log("FROM:", FROM_EMAIL);
   console.log("TO:", clientEmail);
-  console.log("====================================");
 
-  const { data: result, error } =
+  const { data, error } =
     await resend.emails.send({
       from: FROM_EMAIL,
 
-      // ⭐ CLIENT EMAIL
+      // ================================================
+      // IMPORTANT:
+      // THIS IS THE CLIENT'S EMAIL
+      // ================================================
+
       to: [clientEmail],
 
       subject:
-        "We received your inquiry | STACKRA TECHNOLOGIES",
+        "Your inquiry has been successfully received | STACKRA TECHNOLOGIES",
 
       html: `
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
-  />
+  >
 </head>
 
 <body style="
@@ -333,15 +344,16 @@ export async function sendAutoReply({
     max-width:650px;
     margin:40px auto;
     background:#ffffff;
+    border:1px solid #e2e8f0;
     border-radius:16px;
     overflow:hidden;
-    border:1px solid #e2e8f0;
   ">
 
     <!-- HEADER -->
+
     <div style="
-      padding:32px;
       background:#0f172a;
+      padding:32px;
       color:#ffffff;
     ">
 
@@ -363,10 +375,11 @@ export async function sendAutoReply({
     </div>
 
     <!-- CONTENT -->
+
     <div style="padding:35px;">
 
       <h2 style="
-        margin:0 0 18px;
+        margin:0 0 20px;
         color:#0f172a;
       ">
         Hello ${escapeHTML(name)} 👋
@@ -380,22 +393,50 @@ export async function sendAutoReply({
         <strong>STACKRA TECHNOLOGIES</strong>.
       </p>
 
+      <!-- SUCCESS BOX -->
+
+      <div style="
+        margin:30px 0;
+        padding:22px;
+        background:#f0fdf4;
+        border:1px solid #bbf7d0;
+        border-radius:12px;
+      ">
+
+        <div style="
+          color:#166534;
+          font-size:16px;
+          font-weight:bold;
+        ">
+          ✓ Inquiry Successfully Received
+        </div>
+
+        <p style="
+          margin:10px 0 0;
+          color:#475569;
+          line-height:1.7;
+        ">
+          Your project inquiry has been successfully
+          submitted and received by our team.
+        </p>
+
+      </div>
+
       <p style="
         color:#475569;
         line-height:1.8;
       ">
-        We have successfully received your project
-        inquiry. Our team will review your requirements
-        and get back to you as soon as possible.
+        Our team will review the information you
+        provided and get back to you as soon as possible.
       </p>
 
-      <!-- NEXT STEP -->
+      <!-- NEXT STEPS -->
+
       <div style="
-        margin:30px 0;
+        margin:28px 0;
         padding:22px;
         background:#f8fafc;
-        border-left:4px solid #4f46e5;
-        border-radius:8px;
+        border-radius:12px;
       ">
 
         <strong style="color:#0f172a;">
@@ -422,6 +463,7 @@ export async function sendAutoReply({
       </p>
 
       <!-- SIGNATURE -->
+
       <div style="
         margin-top:35px;
         padding-top:25px;
@@ -434,13 +476,13 @@ export async function sendAutoReply({
           line-height:1.7;
         ">
 
-          Regards,<br />
+          Regards,<br>
 
           <strong style="color:#0f172a;">
             Mohammed Khan
-          </strong><br />
+          </strong><br>
 
-          Founder<br />
+          Founder<br>
 
           <strong>
             STACKRA TECHNOLOGIES
@@ -461,7 +503,7 @@ export async function sendAutoReply({
 
   if (error) {
     console.error(
-      "❌ CLIENT AUTO-REPLY ERROR:",
+      "❌ CLIENT CONFIRMATION FAILED:",
       error
     );
 
@@ -469,14 +511,14 @@ export async function sendAutoReply({
   }
 
   console.log(
-    "✅ Client auto-reply sent:",
+    "✅ CLIENT CONFIRMATION SENT:",
     clientEmail,
-    result?.id
+    data?.id
   );
 
   return {
     success: true,
-    id: result?.id,
+    id: data?.id,
     recipient: clientEmail,
   };
 }
