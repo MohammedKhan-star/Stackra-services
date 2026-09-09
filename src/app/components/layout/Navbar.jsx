@@ -13,6 +13,8 @@ import {
   MonitorSmartphone,
   BrainCircuit,
   GraduationCap,
+  BookOpen,
+  Newspaper,
 } from "lucide-react";
 
 const navLinks = [
@@ -41,6 +43,18 @@ const ecosystemLinks = [
     description: "Learn technology and build future skills",
     href: "/academy",
     icon: GraduationCap,
+  },
+    {
+    name: "STACKRA Books",
+    description: "Learn technology and build future skills",
+    href: "/books",
+    icon: BookOpen,
+  },
+    {
+    name: "STACKRA Blogs",
+    description: "Learn technology and build future skills",
+    href: "/blogs",
+    icon: Newspaper,
   },
 ];
 
