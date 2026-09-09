@@ -18,12 +18,10 @@ if (!globalForMongoose.__mongoose) {
 const cached = globalForMongoose.__mongoose;
 
 export async function connectDB() {
-  // Already connected
   if (cached.conn) {
     return cached.conn;
   }
 
-  // Create connection promise only once
   if (!cached.promise) {
     console.log("🔄 Connecting to MongoDB...");
 
@@ -38,10 +36,11 @@ export async function connectDB() {
         return mongooseInstance;
       })
       .catch((error) => {
-        console.error("❌ MongoDB connection failed:", error);
+        console.error(
+          "❌ MongoDB connection failed:",
+          error
+        );
 
-        // Important: reset the promise so the next request
-        // can try connecting again.
         cached.promise = null;
 
         throw error;
