@@ -7,9 +7,10 @@ import { Resend } from "resend";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
-// For testing with Resend.
-// For production, replace this with a sender from a
-// domain verified in your Resend account.
+// IMPORTANT:
+// For testing, use Resend's test sender.
+// For production, use a sender from a domain
+// verified inside your Resend account.
 const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL ||
   "STACKRA TECHNOLOGIES <onboarding@resend.dev>";
@@ -44,8 +45,8 @@ function validateEmail(email) {
 }
 
 // ======================================================
-// FOUNDER EMAIL
-// Sends the client's inquiry to STACKRA
+// FOUNDER / ADMIN EMAIL
+// Sends inquiry to STACKRA TECHNOLOGIES
 // ======================================================
 
 export async function sendFounderEmail(contact) {
@@ -72,29 +73,35 @@ export async function sendFounderEmail(contact) {
     );
   }
 
-  console.log("📨 Sending founder email...");
+  console.log("======================================");
+  console.log("📨 FOUNDER EMAIL");
   console.log("FROM:", FROM_EMAIL);
   console.log("TO:", adminEmail);
   console.log("REPLY-TO:", clientEmail);
+  console.log("======================================");
 
   const { data, error } =
     await resend.emails.send({
       from: FROM_EMAIL,
 
-      // YOU RECEIVE THE INQUIRY HERE
+      // YOU RECEIVE THE CLIENT INQUIRY
       to: [adminEmail],
 
-      // When you click Reply, it replies to the client
+      // Reply from admin goes directly to client
       replyTo: clientEmail,
 
-      subject: `New Project Inquiry — ${contact.name}`,
+      subject:
+        `New Project Inquiry — ${contact.name}`,
 
       html: `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 </head>
 
 <body style="
@@ -108,12 +115,10 @@ export async function sendFounderEmail(contact) {
     max-width:700px;
     margin:40px auto;
     background:#ffffff;
-    border:1px solid #e2e8f0;
     border-radius:16px;
     overflow:hidden;
+    border:1px solid #e2e8f0;
   ">
-
-    <!-- HEADER -->
 
     <div style="
       background:#0f172a;
@@ -138,8 +143,6 @@ export async function sendFounderEmail(contact) {
 
     </div>
 
-    <!-- CONTENT -->
-
     <div style="padding:32px;">
 
       <h2 style="
@@ -156,8 +159,6 @@ export async function sendFounderEmail(contact) {
         A new project inquiry has been submitted
         through the STACKRA TECHNOLOGIES website.
       </p>
-
-      <!-- CLIENT DETAILS -->
 
       <div style="
         margin-top:25px;
@@ -215,8 +216,6 @@ export async function sendFounderEmail(contact) {
 
       </div>
 
-      <!-- PROJECT DETAILS -->
-
       <div style="
         margin-top:25px;
         padding:22px;
@@ -237,8 +236,6 @@ export async function sendFounderEmail(contact) {
         </p>
 
       </div>
-
-      <!-- FOOTER -->
 
       <div style="
         margin-top:30px;
@@ -264,7 +261,7 @@ export async function sendFounderEmail(contact) {
 
   if (error) {
     console.error(
-      "❌ Founder email failed:",
+      "❌ FOUNDER EMAIL ERROR:",
       error
     );
 
@@ -272,7 +269,7 @@ export async function sendFounderEmail(contact) {
   }
 
   console.log(
-    "✅ Founder email sent:",
+    "✅ FOUNDER EMAIL SENT:",
     data?.id
   );
 
@@ -285,7 +282,7 @@ export async function sendFounderEmail(contact) {
 
 // ======================================================
 // CLIENT CONFIRMATION EMAIL
-// Sends confirmation ONLY to the client's email
+// Sends ONLY to the client's submitted email
 // ======================================================
 
 export async function sendAutoReply({
@@ -304,17 +301,19 @@ export async function sendAutoReply({
     );
   }
 
-  console.log("📧 Sending CLIENT confirmation...");
+  console.log("======================================");
+  console.log("📧 CLIENT CONFIRMATION EMAIL");
   console.log("FROM:", FROM_EMAIL);
   console.log("TO:", clientEmail);
+  console.log("======================================");
 
   const { data, error } =
     await resend.emails.send({
       from: FROM_EMAIL,
 
       // ================================================
-      // IMPORTANT:
-      // THIS IS THE CLIENT'S EMAIL
+      // THIS IS THE MOST IMPORTANT LINE
+      // The confirmation goes to the client's email.
       // ================================================
 
       to: [clientEmail],
@@ -344,9 +343,9 @@ export async function sendAutoReply({
     max-width:650px;
     margin:40px auto;
     background:#ffffff;
-    border:1px solid #e2e8f0;
     border-radius:16px;
     overflow:hidden;
+    border:1px solid #e2e8f0;
   ">
 
     <!-- HEADER -->
@@ -374,7 +373,7 @@ export async function sendAutoReply({
 
     </div>
 
-    <!-- CONTENT -->
+    <!-- BODY -->
 
     <div style="padding:35px;">
 
@@ -393,11 +392,11 @@ export async function sendAutoReply({
         <strong>STACKRA TECHNOLOGIES</strong>.
       </p>
 
-      <!-- SUCCESS BOX -->
+      <!-- CONFIRMATION -->
 
       <div style="
-        margin:30px 0;
-        padding:22px;
+        margin:28px 0;
+        padding:24px;
         background:#f0fdf4;
         border:1px solid #bbf7d0;
         border-radius:12px;
@@ -405,7 +404,7 @@ export async function sendAutoReply({
 
         <div style="
           color:#166534;
-          font-size:16px;
+          font-size:17px;
           font-weight:bold;
         ">
           ✓ Inquiry Successfully Received
@@ -430,13 +429,13 @@ export async function sendAutoReply({
         provided and get back to you as soon as possible.
       </p>
 
-      <!-- NEXT STEPS -->
+      <!-- NEXT STEP -->
 
       <div style="
-        margin:28px 0;
-        padding:22px;
+        margin:25px 0;
+        padding:20px;
         background:#f8fafc;
-        border-radius:12px;
+        border-radius:10px;
       ">
 
         <strong style="color:#0f172a;">
@@ -503,7 +502,7 @@ export async function sendAutoReply({
 
   if (error) {
     console.error(
-      "❌ CLIENT CONFIRMATION FAILED:",
+      "❌ CLIENT CONFIRMATION ERROR:",
       error
     );
 
@@ -511,8 +510,16 @@ export async function sendAutoReply({
   }
 
   console.log(
-    "✅ CLIENT CONFIRMATION SENT:",
-    clientEmail,
+    "✅ CLIENT CONFIRMATION ACCEPTED BY RESEND"
+  );
+
+  console.log(
+    "Recipient:",
+    clientEmail
+  );
+
+  console.log(
+    "Resend ID:",
     data?.id
   );
 
