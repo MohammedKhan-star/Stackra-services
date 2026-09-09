@@ -1,26 +1,14 @@
 import { NextResponse } from "next/server";
-
+import { connectDB } from "../../lib/mongodb";
+import Contact from "../../models/Contact";
 import {
   sendFounderEmail,
   sendAutoReply,
 } from "../../lib/mail";
 
-import { connectDB } from "../../lib/mongodb";
-import Contact from "../../models/Contact";
-
 export async function POST(req) {
   try {
-    // ==============================
-    // Get Form Data
-    // ==============================
-
     const body = await req.json();
-
-    console.log("Contact Form:", body);
-
-    // ==============================
-    // Validate Required Fields
-    // ==============================
 
     const {
       name,
@@ -36,27 +24,18 @@ export async function POST(req) {
       return NextResponse.json(
         {
           success: false,
-          message: "Please fill in all required fields.",
+          message:
+            "Please fill in all required fields.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
-    // ==============================
-    // Connect Database
-    // ==============================
-
+    // Connect MongoDB
     await connectDB();
 
-    // ==============================
-    // Get Request Information
-    // ==============================
-
-    const forwardedFor = req.headers.get(
-      "x-forwarded-for"
-    );
+    const forwardedFor =
+      req.headers.get("x-forwarded-for");
 
     const ip =
       forwardedFor?.split(",")[0]?.trim() ||
@@ -66,17 +45,14 @@ export async function POST(req) {
     const userAgent =
       req.headers.get("user-agent") || "";
 
-    // ==============================
-    // Save Contact Lead
-    // ==============================
-
+    // Save lead
     const contact = await Contact.create({
       name,
       email,
-      phone,
-      company,
+      phone: phone || "",
+      company: company || "",
       service,
-      budget,
+      budget: budget || "",
       message,
       ip,
       userAgent,
@@ -84,77 +60,54 @@ export async function POST(req) {
     });
 
     console.log(
-      "Contact Saved Successfully:",
+      "CONTACT SAVED:",
       contact._id.toString()
     );
 
-    // ==============================
-    // Send Founder Email
-    // ==============================
-
+    // Email should NEVER make form submission fail
     try {
       await sendFounderEmail(contact);
-
-      console.log("Founder Email Sent");
-    } catch (emailError) {
+    } catch (error) {
       console.error(
-        "Founder Email Failed:",
-        emailError.message
+        "Founder email failed:",
+        error
       );
-
-      // Contact is already saved.
-      // We don't want to lose the lead.
     }
-
-    // ==============================
-    // Send Customer Auto Reply
-    // ==============================
 
     try {
       await sendAutoReply({
         name: contact.name,
         email: contact.email,
       });
-
-      console.log("Auto Reply Process Completed");
-    } catch (autoReplyError) {
+    } catch (error) {
       console.error(
-        "Auto Reply Failed:",
-        autoReplyError.message
+        "Auto reply failed:",
+        error
       );
-
-      // Don't fail the contact form.
     }
-
-    // ==============================
-    // Success Response
-    // ==============================
 
     return NextResponse.json(
       {
         success: true,
-
         message:
-          "Thank you! Your message has been received successfully.",
-
+          "Thank you! Your project inquiry has been received.",
         contactId: contact._id.toString(),
       },
-      {
-        status: 201,
-      }
+      { status: 201 }
     );
   } catch (error) {
-    console.error("Contact API Error:", error);
+    console.error(
+      "CONTACT API ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
         message:
-          "Something went wrong. Please try again later.",
+          "Unable to submit your inquiry right now.",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
