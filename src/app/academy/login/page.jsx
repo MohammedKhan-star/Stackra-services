@@ -31,20 +31,18 @@ export default function AcademyLoginPage() {
     }));
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!form.email || !form.password) {
-    alert("Please enter your email and password.");
-    return;
-  }
+    if (!form.email || !form.password) {
+      alert("Please enter your email and password.");
+      return;
+    }
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await fetch(
-      "/api/academy/auth/login",
-      {
+      const response = await fetch("/api/academy/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -53,25 +51,25 @@ export default function AcademyLoginPage() {
           email: form.email,
           password: form.password,
         }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Login failed.");
+        return;
       }
-    );
 
-    const data = await response.json();
+      alert("Login successful!");
 
-    if (!response.ok) {
-      alert(data.message || "Login failed.");
-      return;
+      window.location.href = "/academy/dashboard";
+    } catch (error) {
+      console.error("ACADEMY LOGIN ERROR:", error);
+      alert("Unable to connect to the server. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    window.location.href = "/academy/dashboard";
-  } catch (error) {
-    console.error("Login error:", error);
-
-    alert("Unable to connect to the server.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -90,6 +88,7 @@ export default function AcademyLoginPage() {
               <div className="text-lg font-bold tracking-tight">
                 STACKRA
               </div>
+
               <div className="text-xs font-medium text-cyan-400">
                 ACADEMY
               </div>
@@ -108,10 +107,11 @@ export default function AcademyLoginPage() {
       {/* Main */}
       <section className="relative overflow-hidden">
         <div className="absolute -left-40 top-20 h-80 w-80 rounded-full bg-blue-600/20 blur-3xl" />
+
         <div className="absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />
 
         <div className="relative mx-auto grid min-h-[calc(100vh-81px)] max-w-7xl items-center gap-12 px-6 py-14 lg:grid-cols-2">
-          {/* Left */}
+          {/* Left Side */}
           <div className="hidden lg:block">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-2 text-sm text-blue-300">
               <ShieldCheck className="h-4 w-4" />
@@ -133,14 +133,20 @@ export default function AcademyLoginPage() {
 
             <div className="mt-10 grid max-w-lg grid-cols-2 gap-4">
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                <div className="text-2xl font-bold">Courses</div>
+                <div className="text-2xl font-bold">
+                  Courses
+                </div>
+
                 <p className="mt-1 text-sm text-slate-400">
                   Learn practical technology skills.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                <div className="text-2xl font-bold">Certificates</div>
+                <div className="text-2xl font-bold">
+                  Certificates
+                </div>
+
                 <p className="mt-1 text-sm text-slate-400">
                   Earn certificates after completion.
                 </p>
@@ -151,13 +157,14 @@ export default function AcademyLoginPage() {
           {/* Login Card */}
           <div className="mx-auto w-full max-w-md">
             <div className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-              {/* Mobile logo */}
+              {/* Mobile Logo */}
               <div className="mb-7 flex justify-center lg:hidden">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400">
-                  <BookOpen className="h-7 w-7" />
+                  <BookOpen className="h-7 w-7 text-white" />
                 </div>
               </div>
 
+              {/* Heading */}
               <div className="text-center">
                 <h2 className="text-3xl font-bold">
                   Welcome Back
@@ -168,6 +175,7 @@ export default function AcademyLoginPage() {
                 </p>
               </div>
 
+              {/* Form */}
               <form
                 onSubmit={handleSubmit}
                 className="mt-8 space-y-5"
@@ -192,6 +200,7 @@ export default function AcademyLoginPage() {
                       onChange={handleChange}
                       placeholder="you@example.com"
                       autoComplete="email"
+                      required
                       className="w-full rounded-xl border border-white/10 bg-slate-900/80 py-3.5 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
@@ -207,12 +216,17 @@ export default function AcademyLoginPage() {
                       Password
                     </label>
 
-                    <Link
-                      href="/academy/forgot-password"
+                    <button
+                      type="button"
+                      onClick={() =>
+                        alert(
+                          "Password recovery will be added next."
+                        )
+                      }
                       className="text-xs font-medium text-blue-400 transition hover:text-blue-300"
                     >
                       Forgot Password?
-                    </Link>
+                    </button>
                   </div>
 
                   <div className="relative">
@@ -221,18 +235,25 @@ export default function AcademyLoginPage() {
                     <input
                       id="password"
                       name="password"
-                      type={showPassword ? "text" : "password"}
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
                       value={form.password}
                       onChange={handleChange}
                       placeholder="Enter your password"
                       autoComplete="current-password"
+                      required
                       className="w-full rounded-xl border border-white/10 bg-slate-900/80 py-3.5 pl-12 pr-12 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
 
                     <button
                       type="button"
                       onClick={() =>
-                        setShowPassword((prev) => !prev)
+                        setShowPassword(
+                          (prev) => !prev
+                        )
                       }
                       className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-slate-500 transition hover:text-white"
                       aria-label={
@@ -250,7 +271,7 @@ export default function AcademyLoginPage() {
                   </div>
                 </div>
 
-                {/* Remember */}
+                {/* Remember Me */}
                 <label className="flex cursor-pointer items-center gap-3 text-sm text-slate-400">
                   <input
                     type="checkbox"
@@ -283,6 +304,7 @@ export default function AcademyLoginPage() {
               {/* Register */}
               <div className="mt-7 text-center text-sm text-slate-400">
                 Don't have an account?{" "}
+
                 <Link
                   href="/academy/register"
                   className="font-semibold text-blue-400 transition hover:text-blue-300"
@@ -294,7 +316,9 @@ export default function AcademyLoginPage() {
               {/* Security */}
               <div className="mt-7 flex items-center justify-center gap-2 border-t border-white/10 pt-6 text-xs text-slate-500">
                 <ShieldCheck className="h-4 w-4" />
-                Your account information is securely protected.
+
+                Your account information is securely
+                protected.
               </div>
             </div>
           </div>
@@ -304,8 +328,8 @@ export default function AcademyLoginPage() {
       {/* Footer */}
       <footer className="border-t border-white/10 py-6">
         <div className="mx-auto max-w-7xl px-6 text-center text-xs text-slate-500">
-          © {new Date().getFullYear()} STACKRA Academy — STACKRA
-          TECHNOLOGIES
+          © {new Date().getFullYear()} STACKRA Academy —
+          STACKRA TECHNOLOGIES
         </div>
       </footer>
     </main>
