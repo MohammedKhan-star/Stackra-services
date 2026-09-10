@@ -1,3 +1,4 @@
+
 const services = [
   {
     title: "Web Development",
@@ -56,6 +57,20 @@ const services = [
   },
 
   {
+    title: "Learning Management System",
+    image: "/services/lms.jpg",
+    desc: "Complete online learning platforms that help institutions, trainers, and businesses deliver and manage digital education.",
+    points: [
+      "Course Management",
+      "Student Management",
+      "Online Classes",
+      "Assignments & Quizzes",
+      "Progress Tracking",
+      "Certificates",
+    ],
+  },
+
+  {
     title: "Restaurant & Food Solutions",
     image: "/services/restaurant.jpg",
     desc: "Digital solutions for restaurants and food businesses with menus, ordering, bookings, and customer engagement.",
@@ -89,25 +104,53 @@ const services = [
     desc: "Powerful custom software solutions designed around your business requirements, workflows, and operations.",
     points: [
       "Business Management Systems",
-      "CRM Solutions",
+      "Custom Applications",
       "Admin Dashboards",
-      "Custom Web Applications",
+      "Workflow Automation",
       "Secure Authentication",
       "Cloud Deployment",
     ],
   },
 
   {
-    title: "Artificial Intelligence Solutions",
-    image: "/services/artificial-intelligence.jpg",
-    desc: "AI-powered solutions that automate workflows, analyze data, and help businesses operate more intelligently.",
+    title: "CRM Solutions",
+    image: "/services/crm.jpg",
+    desc: "Customer Relationship Management systems that help businesses manage leads, customers, sales, communication, and relationships.",
     points: [
-      "AI Assistants",
-      "Business Automation",
-      "AI Integration",
-      "Intelligent Analytics",
-      "AI-Powered Workflows",
-      "Custom AI Solutions",
+      "Lead Management",
+      "Customer Management",
+      "Sales Pipeline",
+      "Follow-Up Management",
+      "Communication Tracking",
+      "CRM Dashboard",
+    ],
+  },
+
+  {
+    title: "ERP Solutions",
+    image: "/services/erp.jpg",
+    desc: "Integrated Enterprise Resource Planning systems that connect business operations, finance, inventory, sales, and workforce management.",
+    points: [
+      "Finance & Accounting",
+      "Inventory Management",
+      "Sales Management",
+      "Purchase Management",
+      "Employee Management",
+      "Business Analytics",
+    ],
+  },
+
+  {
+    title: "Project Management System",
+    image: "/services/project-management.jpg",
+    desc: "Powerful project management platforms that help teams plan, track, collaborate, and deliver projects efficiently.",
+    points: [
+      "Project Planning",
+      "Task Management",
+      "Team Collaboration",
+      "Project Tracking",
+      "Time & Progress Tracking",
+      "Reports & Analytics",
     ],
   },
 
@@ -127,3 +170,4 @@ const services = [
 ];
 
 export default services;
+
