@@ -6,15 +6,19 @@ import Student from "@/models/Student";
 
 export async function POST(request) {
   try {
+    // Read request body
     const body = await request.json();
 
-    const { fullName, email, password } = body;
+    const fullName = body.fullName?.trim();
+    const email = body.email?.trim().toLowerCase();
+    const password = body.password;
 
+    // Validate required fields
     if (!fullName || !email || !password) {
       return NextResponse.json(
         {
           success: false,
-          message: "All fields are required.",
+          message: "Full name, email, and password are required.",
         },
         {
           status: 400,
@@ -22,6 +26,20 @@ export async function POST(request) {
       );
     }
 
+    // Validate name
+    if (fullName.length < 2) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Full name must contain at least 2 characters.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // Validate password
     if (password.length < 6) {
       return NextResponse.json(
         {
@@ -34,12 +52,12 @@ export async function POST(request) {
       );
     }
 
+    // Connect to MongoDB
     await connectDB();
 
-    const normalizedEmail = email.trim().toLowerCase();
-
+    // Check whether student already exists
     const existingStudent = await Student.findOne({
-      email: normalizedEmail,
+      email,
     });
 
     if (existingStudent) {
@@ -54,20 +72,25 @@ export async function POST(request) {
       );
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Create student
     const student = await Student.create({
-      fullName: fullName.trim(),
-      email: normalizedEmail,
+      fullName,
+      email,
       password: hashedPassword,
+      role: "student",
+      isActive: true,
     });
 
+    // Return successful response
     return NextResponse.json(
       {
         success: true,
         message: "Student account created successfully.",
         student: {
-          id: student._id,
+          id: student._id.toString(),
           fullName: student.fullName,
           email: student.email,
           role: student.role,
@@ -78,12 +101,28 @@ export async function POST(request) {
       }
     );
   } catch (error) {
-    console.error("ACADEMY REGISTRATION ERROR:", error);
+    console.error(
+      "ACADEMY REGISTRATION ERROR:",
+      error
+    );
+
+    // Handle duplicate email race condition
+    if (error.code === 11000) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "An account with this email already exists.",
+        },
+        {
+          status: 409,
+        }
+      );
+    }
 
     return NextResponse.json(
       {
         success: false,
-        message: "Something went wrong while creating the account.",
+        message: "Unable to create student account.",
       },
       {
         status: 500,
