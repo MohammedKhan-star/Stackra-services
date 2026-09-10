@@ -31,22 +31,47 @@ export default function AcademyLoginPage() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!form.email || !form.password) {
-      alert("Please enter your email and password.");
+  if (!form.email || !form.password) {
+    alert("Please enter your email and password.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const response = await fetch(
+      "/api/academy/auth/login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.message || "Login failed.");
       return;
     }
 
-    setLoading(true);
+    window.location.href = "/academy/dashboard";
+  } catch (error) {
+    console.error("Login error:", error);
 
-    // Authentication API will be connected next.
-    setTimeout(() => {
-      setLoading(false);
-      alert("Login system will be connected to MongoDB next.");
-    }, 800);
-  };
+    alert("Unable to connect to the server.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
