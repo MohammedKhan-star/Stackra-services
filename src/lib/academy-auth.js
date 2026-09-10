@@ -10,13 +10,12 @@ const secretKey = new TextEncoder().encode(secret);
 
 export async function createAcademyToken(student) {
   return await new SignJWT({
-    studentId: String(student._id),
+    studentId: student.id,
     email: student.email,
     role: student.role,
+    fullName: student.fullName,
   })
-    .setProtectedHeader({
-      alg: "HS256",
-    })
+    .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(secretKey);
@@ -24,13 +23,10 @@ export async function createAcademyToken(student) {
 
 export async function verifyAcademyToken(token) {
   try {
-    const { payload } = await jwtVerify(
-      token,
-      secretKey
-    );
+    const { payload } = await jwtVerify(token, secretKey);
 
     return payload;
-  } catch {
+  } catch (error) {
     return null;
   }
 }
