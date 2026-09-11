@@ -16,6 +16,7 @@ import {
 export default function AcademyRegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -34,28 +35,91 @@ export default function AcademyRegisterPage() {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
+    // Full name validation
+    if (!form.name.trim()) {
+      alert("Please enter your full name.");
+      return;
+    }
+
+    // Email validation
+    if (!form.email.trim()) {
+      alert("Please enter your email address.");
+      return;
+    }
+
+    // Password validation
+    if (!form.password) {
+      alert("Please enter a password.");
+      return;
+    }
+
+    if (form.password.length < 6) {
+      alert("Password must contain at least 6 characters.");
+      return;
+    }
+
+    // Confirm password validation
     if (form.password !== form.confirmPassword) {
       alert("Passwords do not match.");
       return;
     }
 
+    // Terms validation
     if (!form.agree) {
       alert("Please accept the terms and policies.");
       return;
     }
 
-    alert("Registration system will be connected to MongoDB next.");
+    try {
+      setLoading(true);
+
+      const response = await fetch("/api/academy/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: form.name.trim(),
+          email: form.email.trim(),
+          password: form.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Registration failed.");
+        return;
+      }
+
+      alert(
+        data.message || "Student account created successfully."
+      );
+
+      // Redirect to login
+      window.location.href = "/academy/login";
+    } catch (error) {
+      console.error("ACADEMY REGISTRATION ERROR:", error);
+
+      alert(
+        "Unable to connect to the server. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
+
       {/* HEADER */}
 
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
+
           <Link
             href="/academy"
             className="flex items-center gap-3"
@@ -77,6 +141,7 @@ export default function AcademyRegisterPage() {
 
           <div className="text-sm text-slate-500">
             Already have an account?
+
             <Link
               href="/academy/login"
               className="ml-2 font-semibold text-slate-950"
@@ -84,24 +149,31 @@ export default function AcademyRegisterPage() {
               Login
             </Link>
           </div>
+
         </div>
       </header>
 
       {/* CONTENT */}
 
       <section className="mx-auto flex max-w-6xl justify-center px-6 py-12 lg:py-20">
+
         <div className="grid w-full overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm lg:grid-cols-2">
-          {/* LEFT */}
+
+          {/* LEFT SIDE */}
 
           <div className="hidden bg-slate-950 p-10 text-white lg:block lg:p-14">
+
             <div className="flex h-full flex-col justify-between">
+
               <div>
+
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-950">
                   <GraduationCap size={28} />
                 </div>
 
                 <h1 className="mt-10 text-4xl font-bold leading-tight">
                   Start your
+
                   <span className="block text-slate-400">
                     technology journey.
                   </span>
@@ -112,10 +184,15 @@ export default function AcademyRegisterPage() {
                   through practical courses, projects and AI-powered
                   learning.
                 </p>
+
               </div>
 
               <div className="mt-12 space-y-5">
+
+                {/* FEATURE 1 */}
+
                 <div className="flex gap-4">
+
                   <CheckCircle2
                     size={21}
                     className="mt-0.5 shrink-0"
@@ -130,9 +207,13 @@ export default function AcademyRegisterPage() {
                       Learn through real-world projects.
                     </p>
                   </div>
+
                 </div>
 
+                {/* FEATURE 2 */}
+
                 <div className="flex gap-4">
+
                   <CheckCircle2
                     size={21}
                     className="mt-0.5 shrink-0"
@@ -147,9 +228,13 @@ export default function AcademyRegisterPage() {
                       Continue learning from your dashboard.
                     </p>
                   </div>
+
                 </div>
 
+                {/* FEATURE 3 */}
+
                 <div className="flex gap-4">
+
                   <CheckCircle2
                     size={21}
                     className="mt-0.5 shrink-0"
@@ -164,15 +249,21 @@ export default function AcademyRegisterPage() {
                       Get certified after completing courses.
                     </p>
                   </div>
+
                 </div>
+
               </div>
+
             </div>
+
           </div>
 
-          {/* FORM */}
+          {/* FORM SIDE */}
 
           <div className="p-7 sm:p-10 lg:p-14">
+
             <div className="mx-auto max-w-md">
+
               <p className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
                 Student Registration
               </p>
@@ -185,13 +276,17 @@ export default function AcademyRegisterPage() {
                 Create a STACKRA Academy account to start learning.
               </p>
 
+              {/* REGISTRATION FORM */}
+
               <form
                 onSubmit={handleSubmit}
                 className="mt-8 space-y-5"
               >
+
                 {/* NAME */}
 
                 <div>
+
                   <label
                     htmlFor="name"
                     className="mb-2 block text-sm font-semibold"
@@ -200,6 +295,7 @@ export default function AcademyRegisterPage() {
                   </label>
 
                   <div className="relative">
+
                     <User
                       size={18}
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
@@ -213,14 +309,19 @@ export default function AcademyRegisterPage() {
                       value={form.name}
                       onChange={handleChange}
                       placeholder="Enter your full name"
-                      className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 outline-none transition focus:border-slate-950"
+                      autoComplete="name"
+                      disabled={loading}
+                      className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 outline-none transition focus:border-slate-950 disabled:cursor-not-allowed disabled:bg-slate-50"
                     />
+
                   </div>
+
                 </div>
 
                 {/* EMAIL */}
 
                 <div>
+
                   <label
                     htmlFor="email"
                     className="mb-2 block text-sm font-semibold"
@@ -229,6 +330,7 @@ export default function AcademyRegisterPage() {
                   </label>
 
                   <div className="relative">
+
                     <Mail
                       size={18}
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
@@ -242,14 +344,19 @@ export default function AcademyRegisterPage() {
                       value={form.email}
                       onChange={handleChange}
                       placeholder="you@example.com"
-                      className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 outline-none transition focus:border-slate-950"
+                      autoComplete="email"
+                      disabled={loading}
+                      className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 outline-none transition focus:border-slate-950 disabled:cursor-not-allowed disabled:bg-slate-50"
                     />
+
                   </div>
+
                 </div>
 
                 {/* PASSWORD */}
 
                 <div>
+
                   <label
                     htmlFor="password"
                     className="mb-2 block text-sm font-semibold"
@@ -258,6 +365,7 @@ export default function AcademyRegisterPage() {
                   </label>
 
                   <div className="relative">
+
                     <Lock
                       size={18}
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
@@ -266,21 +374,33 @@ export default function AcademyRegisterPage() {
                     <input
                       id="password"
                       name="password"
-                      type={showPassword ? "text" : "password"}
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
                       required
                       minLength={6}
                       value={form.password}
                       onChange={handleChange}
                       placeholder="Create a password"
-                      className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-11 pr-12 outline-none transition focus:border-slate-950"
+                      autoComplete="new-password"
+                      disabled={loading}
+                      className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-11 pr-12 outline-none transition focus:border-slate-950 disabled:cursor-not-allowed disabled:bg-slate-50"
                     />
 
                     <button
                       type="button"
+                      disabled={loading}
                       onClick={() =>
                         setShowPassword(!showPassword)
                       }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-950"
+                      aria-label={
+                        showPassword
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-950 disabled:cursor-not-allowed"
                     >
                       {showPassword ? (
                         <EyeOff size={18} />
@@ -288,16 +408,19 @@ export default function AcademyRegisterPage() {
                         <Eye size={18} />
                       )}
                     </button>
+
                   </div>
 
                   <p className="mt-2 text-xs text-slate-400">
                     Minimum 6 characters.
                   </p>
+
                 </div>
 
                 {/* CONFIRM PASSWORD */}
 
                 <div>
+
                   <label
                     htmlFor="confirmPassword"
                     className="mb-2 block text-sm font-semibold"
@@ -306,6 +429,7 @@ export default function AcademyRegisterPage() {
                   </label>
 
                   <div className="relative">
+
                     <Lock
                       size={18}
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
@@ -323,17 +447,25 @@ export default function AcademyRegisterPage() {
                       value={form.confirmPassword}
                       onChange={handleChange}
                       placeholder="Confirm your password"
-                      className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-11 pr-12 outline-none transition focus:border-slate-950"
+                      autoComplete="new-password"
+                      disabled={loading}
+                      className="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-11 pr-12 outline-none transition focus:border-slate-950 disabled:cursor-not-allowed disabled:bg-slate-50"
                     />
 
                     <button
                       type="button"
+                      disabled={loading}
                       onClick={() =>
                         setShowConfirmPassword(
                           !showConfirmPassword
                         )
                       }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-950"
+                      aria-label={
+                        showConfirmPassword
+                          ? "Hide confirm password"
+                          : "Show confirm password"
+                      }
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-950 disabled:cursor-not-allowed"
                     >
                       {showConfirmPassword ? (
                         <EyeOff size={18} />
@@ -341,17 +473,21 @@ export default function AcademyRegisterPage() {
                         <Eye size={18} />
                       )}
                     </button>
+
                   </div>
+
                 </div>
 
                 {/* TERMS */}
 
                 <label className="flex cursor-pointer items-start gap-3">
+
                   <input
                     type="checkbox"
                     name="agree"
                     checked={form.agree}
                     onChange={handleChange}
+                    disabled={loading}
                     className="mt-1 h-4 w-4 rounded border-slate-300"
                   />
 
@@ -359,20 +495,31 @@ export default function AcademyRegisterPage() {
                     I agree to the STACKRA Academy terms,
                     privacy policy and learning policies.
                   </span>
+
                 </label>
 
                 {/* SUBMIT */}
 
                 <button
                   type="submit"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 py-4 font-semibold text-white transition hover:bg-slate-800"
+                  disabled={loading}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 py-4 font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Create Student Account
-                  <ArrowRight size={18} />
+                  {loading
+                    ? "Creating Account..."
+                    : "Create Student Account"}
+
+                  {!loading && (
+                    <ArrowRight size={18} />
+                  )}
                 </button>
+
               </form>
 
+              {/* LOGIN LINK */}
+
               <div className="mt-8 text-center text-sm text-slate-500">
+
                 Already registered?
 
                 <Link
@@ -381,20 +528,30 @@ export default function AcademyRegisterPage() {
                 >
                   Sign in
                 </Link>
+
               </div>
+
             </div>
+
           </div>
+
         </div>
+
       </section>
 
       {/* FOOTER */}
 
       <footer className="border-t border-slate-200 bg-white">
+
         <div className="mx-auto max-w-6xl px-6 py-7 text-center text-xs text-slate-500">
+
           © {new Date().getFullYear()} STACKRA TECHNOLOGIES.
           All rights reserved.
+
         </div>
+
       </footer>
+
     </main>
   );
 }
