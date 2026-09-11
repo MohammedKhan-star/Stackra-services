@@ -1,8 +1,6 @@
 import Script from "next/script";
 import "./globals.css";
 
-import Navbar from "./components/layout/Navbar";
-
 export const metadata = {
   metadataBase: new URL("https://stackratechnologies.com"),
 
@@ -13,23 +11,26 @@ export const metadata = {
   },
 
   description:
-    "STACKRA TECHNOLOGIES builds modern websites, SaaS platforms, AI solutions, and custom software for businesses and organizations.",
+    "STACKRA TECHNOLOGIES is a software and AI development company in India providing web development, SaaS platforms, artificial intelligence solutions, custom software, and digital products.",
 
   keywords: [
     "STACKRA TECHNOLOGIES",
-    "Software Development Company",
-    "AI Development Company",
-    "Web Development Company",
-    "Custom Software Development",
-    "Artificial Intelligence Solutions",
-    "SaaS Development",
-    "Next.js Development",
-    "React Development",
-    "Full Stack Development",
-    "Software Company in India",
-    "AI Company in India",
-    "Software Development Hyderabad",
-    "AI Development Hyderabad",
+    "Stackra Technologies Hyderabad",
+    "software company in Hyderabad",
+    "software development company Hyderabad",
+    "AI company Hyderabad",
+    "AI development company Hyderabad",
+    "web development company Hyderabad",
+    "custom software development Hyderabad",
+    "SaaS development company India",
+    "software development company India",
+    "AI solutions India",
+    "web development India",
+    "Next.js development",
+    "React development",
+    "full stack development",
+    "custom software development",
+    "artificial intelligence solutions",
   ],
 
   authors: [
@@ -42,9 +43,9 @@ export const metadata = {
   creator: "Mohammed Khan",
   publisher: "STACKRA TECHNOLOGIES",
 
-  category: "technology",
-
   applicationName: "STACKRA TECHNOLOGIES",
+
+  category: "technology",
 
   alternates: {
     canonical: "https://stackratechnologies.com",
@@ -65,23 +66,25 @@ export const metadata = {
 
   openGraph: {
     type: "website",
-    locale: "en_US",
+
+    locale: "en_IN",
+
     url: "https://stackratechnologies.com",
 
+    siteName: "STACKRA TECHNOLOGIES",
+
     title:
-      "STACKRA TECHNOLOGIES | Software & AI Development Company",
+      "STACKRA TECHNOLOGIES | Software Development & AI Company in India",
 
     description:
-      "Modern software development, AI solutions, SaaS platforms, and scalable digital products.",
-
-    siteName: "STACKRA TECHNOLOGIES",
+      "Software development, AI solutions, SaaS platforms, web development, and custom digital products by STACKRA TECHNOLOGIES.",
 
     images: [
       {
         url: "/logo/logo6.png",
         width: 1200,
         height: 630,
-        alt: "STACKRA TECHNOLOGIES - Software & AI Company",
+        alt: "STACKRA TECHNOLOGIES - Software Development & AI Company",
       },
     ],
   },
@@ -89,10 +92,11 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
 
-    title: "STACKRA TECHNOLOGIES",
+    title:
+      "STACKRA TECHNOLOGIES | Software Development & AI Company",
 
     description:
-      "Software Development, AI Solutions and Digital Products.",
+      "Software development, AI solutions, SaaS platforms, and custom digital products.",
 
     images: ["/logo/logo6.png"],
 
@@ -131,16 +135,24 @@ export default function RootLayout({ children }) {
       {
         "@type": "Organization",
 
+        "@id": "https://stackratechnologies.com/#organization",
+
         name: "STACKRA TECHNOLOGIES",
 
         url: "https://stackratechnologies.com",
 
-        logo: "https://stackratechnologies.com/logo/logo6.png",
+        logo: {
+          "@type": "ImageObject",
+          url: "https://stackratechnologies.com/logo/logo6.png",
+        },
 
         founder: {
           "@type": "Person",
           name: "Mohammed Khan",
         },
+
+        description:
+          "STACKRA TECHNOLOGIES is a software and AI development company providing web development, SaaS, artificial intelligence solutions, and custom software.",
 
         sameAs: [
           "https://www.instagram.com/stackra_technologies",
@@ -156,36 +168,64 @@ export default function RootLayout({ children }) {
 
           contactType: "customer support",
 
-          availableLanguage: ["English", "Hindi"],
-
           email: "stackratechnologies@gmail.com",
+
+          availableLanguage: [
+            "English",
+            "Hindi",
+          ],
         },
 
-        areaServed: "IN",
+        areaServed: {
+          "@type": "Country",
+          name: "India",
+        },
 
-        serviceType:
-          "Software Development, Artificial Intelligence Solutions, Web Development",
+        knowsAbout: [
+          "Software Development",
+          "Web Development",
+          "Artificial Intelligence",
+          "SaaS Development",
+          "React.js",
+          "Next.js",
+          "Full Stack Development",
+          "Custom Software Development",
+        ],
       },
 
       {
         "@type": "WebSite",
 
+        "@id": "https://stackratechnologies.com/#website",
+
         name: "STACKRA TECHNOLOGIES",
 
         url: "https://stackratechnologies.com",
+
+        description:
+          "Official website of STACKRA TECHNOLOGIES.",
+
+        publisher: {
+          "@id": "https://stackratechnologies.com/#organization",
+        },
+
+        inLanguage: "en-IN",
       },
     ],
   };
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en-IN" suppressHydrationWarning>
       <body
         suppressHydrationWarning
         className="bg-slate-50 text-slate-900 antialiased"
       >
-        {/* Organization Schema */}
+        {/* =====================================================
+            STACKRA TECHNOLOGIES - Organization Schema
+        ====================================================== */}
+
         <Script
-          id="organization-schema"
+          id="stackra-organization-schema"
           type="application/ld+json"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
@@ -193,13 +233,20 @@ export default function RootLayout({ children }) {
           }}
         />
 
-        {/* Razorpay Checkout */}
+        {/* =====================================================
+            RAZORPAY CHECKOUT
+        ====================================================== */}
+
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
           strategy="afterInteractive"
         />
 
-        <main className="min-h-screen pt-0">
+        {/* =====================================================
+            APPLICATION
+        ====================================================== */}
+
+        <main className="min-h-screen">
           {children}
         </main>
       </body>
