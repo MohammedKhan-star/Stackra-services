@@ -6,12 +6,14 @@ const EnrollmentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",
       required: true,
+      index: true,
     },
 
     courseSlug: {
       type: String,
       required: true,
       trim: true,
+      index: true,
     },
 
     courseTitle: {
@@ -26,16 +28,16 @@ const EnrollmentSchema = new mongoose.Schema(
       min: 0,
     },
 
-    status: {
+    currency: {
       type: String,
-      enum: ["pending", "active", "completed", "cancelled"],
-      default: "pending",
+      default: "INR",
+      uppercase: true,
     },
 
-    paymentStatus: {
+    orderId: {
       type: String,
-      enum: ["pending", "paid", "failed", "refunded"],
-      default: "pending",
+      default: null,
+      index: true,
     },
 
     paymentId: {
@@ -43,9 +45,46 @@ const EnrollmentSchema = new mongoose.Schema(
       default: null,
     },
 
-    orderId: {
+    paymentStatus: {
       type: String,
-      default: null,
+      enum: [
+        "pending",
+        "paid",
+        "failed",
+        "refunded",
+      ],
+      default: "pending",
+      index: true,
+    },
+
+    status: {
+      type: String,
+      enum: [
+        "pending",
+        "active",
+        "completed",
+        "cancelled",
+      ],
+      default: "pending",
+      index: true,
+    },
+
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+
+    completedLessons: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    completedLessonIds: {
+      type: [String],
+      default: [],
     },
 
     enrolledAt: {
@@ -56,13 +95,6 @@ const EnrollmentSchema = new mongoose.Schema(
     completedAt: {
       type: Date,
       default: null,
-    },
-
-    progress: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100,
     },
   },
   {
