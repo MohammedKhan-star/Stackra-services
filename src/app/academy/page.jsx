@@ -138,14 +138,14 @@ export default function AcademyPage() {
 
           <div className="flex items-center gap-3">
             <Link
-              href="/login"
+              href="/academy/login"
               className="hidden rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:block"
             >
               Login
             </Link>
 
             <Link
-              href="/register"
+              href="/academy/register"
               className="rounded-lg bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               Get Started
