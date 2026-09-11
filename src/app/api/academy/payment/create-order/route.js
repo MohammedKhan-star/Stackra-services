@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 
 import connectDB from "@/lib/mongodb";
 import Enrollment from "@/models/Enrollment";
-import Student from "@/models/Student";
 import { verifyAcademyToken } from "@/lib/academy-auth";
 
 export async function POST(request) {
@@ -32,13 +32,24 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const enrollmentId = body.enrollmentId;
 
-    if (!enrollmentId) {
+    const {
+      enrollmentId,
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+    } = body;
+
+    if (
+      !enrollmentId ||
+      !razorpay_payment_id ||
+      !razorpay_order_id ||
+      !razorpay_signature
+    ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Enrollment ID is required.",
+          message: "Payment verification details are incomplete.",
         },
         { status: 400 }
       );
@@ -46,31 +57,9 @@ export async function POST(request) {
 
     await connectDB();
 
-    const dbStudent = await Student.findById(student.studentId);
-
-    if (!dbStudent) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Student account not found.",
-        },
-        { status: 404 }
-      );
-    }
-
-    if (dbStudent.isActive === false) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Your student account is disabled.",
-        },
-        { status: 403 }
-      );
-    }
-
     const enrollment = await Enrollment.findOne({
       _id: enrollmentId,
-      studentId: dbStudent._id,
+      studentId: student.studentId,
     });
 
     if (!enrollment) {
@@ -83,107 +72,101 @@ export async function POST(request) {
       );
     }
 
-    if (
-      enrollment.status === "active" ||
-      enrollment.status === "completed" ||
-      enrollment.paymentStatus === "paid"
-    ) {
+    if (!enrollment.orderId) {
       return NextResponse.json(
         {
           success: false,
-          message: "This course has already been paid for.",
+          message: "No Razorpay order is associated with this enrollment.",
         },
-        { status: 409 }
+        { status: 400 }
       );
     }
 
-    const keyId = process.env.RAZORPAY_KEY_ID;
+    if (enrollment.orderId !== razorpay_order_id) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Payment order does not match this enrollment.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (enrollment.paymentStatus === "paid") {
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Payment has already been verified.",
+          enrollmentId: enrollment._id.toString(),
+        },
+        { status: 200 }
+      );
+    }
+
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
-    if (!keyId || !keySecret) {
-      console.error("RAZORPAY ENVIRONMENT VARIABLES ARE MISSING.");
+    if (!keySecret) {
+      console.error("RAZORPAY_KEY_SECRET IS MISSING.");
 
       return NextResponse.json(
         {
           success: false,
-          message: "Payment gateway is not configured.",
+          message: "Payment verification is not configured.",
         },
         { status: 500 }
       );
     }
 
-    const amountInPaise = Math.round(enrollment.amount * 100);
+    const generatedSignature = crypto
+      .createHmac("sha256", keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
 
-    const receipt = `stackra_${enrollment._id
-      .toString()
-      .slice(-20)}_${Date.now().toString().slice(-8)}`;
+    const expectedBuffer = Buffer.from(generatedSignature, "utf8");
+    const receivedBuffer = Buffer.from(razorpay_signature, "utf8");
 
-    const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
+    const signatureValid =
+      expectedBuffer.length === receivedBuffer.length &&
+      crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 
-    const razorpayResponse = await fetch(
-      "https://api.razorpay.com/v1/orders",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${auth}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: amountInPaise,
-          currency: enrollment.currency || "INR",
-          receipt,
-          notes: {
-            studentId: dbStudent._id.toString(),
-            enrollmentId: enrollment._id.toString(),
-            courseSlug: enrollment.courseSlug,
-            courseTitle: enrollment.courseTitle,
-          },
-        }),
-      }
-    );
-
-    const razorpayData = await razorpayResponse.json();
-
-    if (!razorpayResponse.ok) {
-      console.error("RAZORPAY ORDER ERROR:", razorpayData);
+    if (!signatureValid) {
+      console.error("RAZORPAY SIGNATURE VERIFICATION FAILED.");
 
       return NextResponse.json(
         {
           success: false,
-          message:
-            razorpayData?.error?.description ||
-            "Unable to create Razorpay order.",
+          message: "Payment verification failed.",
         },
-        { status: 500 }
+        { status: 400 }
       );
     }
 
-    enrollment.orderId = razorpayData.id;
-    enrollment.paymentStatus = "pending";
-    enrollment.status = "pending";
+    enrollment.paymentId = razorpay_payment_id;
+    enrollment.paymentStatus = "paid";
+    enrollment.status = "active";
+    enrollment.progress = 0;
+    enrollment.completedLessons = 0;
+    enrollment.enrolledAt = new Date();
 
     await enrollment.save();
 
     return NextResponse.json(
       {
         success: true,
-        message: "Razorpay order created successfully.",
-        orderId: razorpayData.id,
-        amount: amountInPaise,
-        currency: enrollment.currency || "INR",
-        keyId,
+        message: "Payment verified successfully. Course activated.",
         enrollmentId: enrollment._id.toString(),
+        courseSlug: enrollment.courseSlug,
         courseTitle: enrollment.courseTitle,
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error("ACADEMY CREATE PAYMENT ORDER ERROR:", error);
+    console.error("ACADEMY PAYMENT VERIFICATION ERROR:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: "Unable to create payment order.",
+        message: "Unable to verify payment.",
       },
       { status: 500 }
     );
