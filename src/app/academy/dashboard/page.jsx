@@ -75,6 +75,7 @@ const activities = [
 
 export default function AcademyDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const totalCourses = courses.length;
 
@@ -106,15 +107,29 @@ export default function AcademyDashboardPage() {
       return;
     }
 
-    /*
-     * Logout API will be connected next.
-     */
-    window.location.href = "/academy/login";
+    try {
+      setLoggingOut(true);
+
+      const response = await fetch("/api/academy/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        console.error("Logout request failed.");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      window.location.href = "/academy/login";
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      {/* Mobile Overlay */}
+      {/* MOBILE OVERLAY */}
       {sidebarOpen && (
         <button
           type="button"
@@ -124,7 +139,7 @@ export default function AcademyDashboardPage() {
         />
       )}
 
-      {/* Sidebar */}
+      {/* SIDEBAR */}
       <aside
         className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col border-r border-white/10 bg-slate-950 transition-transform duration-300 ${
           sidebarOpen
@@ -132,20 +147,19 @@ export default function AcademyDashboardPage() {
             : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        {/* Logo */}
+        {/* LOGO */}
         <div className="flex h-20 items-center justify-between border-b border-white/10 px-6">
           <Link
             href="/academy"
             className="flex items-center gap-3"
+            onClick={closeSidebar}
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400">
               <BookOpen className="h-5 w-5" />
             </div>
 
             <div>
-              <div className="text-lg font-bold">
-                STACKRA
-              </div>
+              <div className="text-lg font-bold">STACKRA</div>
 
               <div className="text-xs font-semibold tracking-wider text-cyan-400">
                 ACADEMY
@@ -156,13 +170,14 @@ export default function AcademyDashboardPage() {
           <button
             type="button"
             onClick={closeSidebar}
+            aria-label="Close menu"
             className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white lg:hidden"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Student Profile */}
+        {/* STUDENT PROFILE */}
         <div className="border-b border-white/10 p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 font-bold">
@@ -181,8 +196,8 @@ export default function AcademyDashboardPage() {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-2 p-4">
+        {/* NAVIGATION */}
+        <nav className="flex-1 space-y-2 overflow-y-auto p-4">
           <p className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-600">
             Learning
           </p>
@@ -190,7 +205,7 @@ export default function AcademyDashboardPage() {
           <Link
             href="/academy/dashboard"
             onClick={closeSidebar}
-            className="flex items-center gap-3 rounded-xl bg-blue-500/10 px-4 py-3 text-sm font-medium text-blue-400"
+            className="flex min-h-12 items-center gap-3 rounded-xl bg-blue-500/10 px-4 py-3 text-sm font-medium text-blue-400"
           >
             <LayoutDashboard className="h-5 w-5" />
             Dashboard
@@ -199,7 +214,7 @@ export default function AcademyDashboardPage() {
           <Link
             href="/academy/courses"
             onClick={closeSidebar}
-            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-white"
+            className="flex min-h-12 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-white"
           >
             <BookOpen className="h-5 w-5" />
             Browse Courses
@@ -208,7 +223,7 @@ export default function AcademyDashboardPage() {
           <Link
             href="/academy/dashboard/certificates"
             onClick={closeSidebar}
-            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-white"
+            className="flex min-h-12 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-white"
           >
             <Award className="h-5 w-5" />
             Certificates
@@ -221,7 +236,7 @@ export default function AcademyDashboardPage() {
           <Link
             href="/academy/dashboard/profile"
             onClick={closeSidebar}
-            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-white"
+            className="flex min-h-12 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-white"
           >
             <User className="h-5 w-5" />
             My Profile
@@ -230,34 +245,37 @@ export default function AcademyDashboardPage() {
           <Link
             href="/academy/dashboard/settings"
             onClick={closeSidebar}
-            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-white"
+            className="flex min-h-12 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-white"
           >
             <Settings className="h-5 w-5" />
             Settings
           </Link>
         </nav>
 
-        {/* Logout */}
+        {/* LOGOUT */}
         <div className="border-t border-white/10 p-4">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-red-500/10 hover:text-red-400"
+            disabled={loggingOut}
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <LogOut className="h-5 w-5" />
-            Logout
+
+            {loggingOut ? "Logging out..." : "Logout"}
           </button>
         </div>
       </aside>
 
-      {/* Main */}
+      {/* MAIN */}
       <div className="lg:pl-72">
-        {/* Topbar */}
+        {/* TOPBAR */}
         <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
           <div className="flex h-20 items-center justify-between px-5 sm:px-8">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
               className="rounded-xl border border-white/10 p-2.5 text-slate-300 hover:bg-white/5 lg:hidden"
             >
               <Menu className="h-5 w-5" />
@@ -291,10 +309,10 @@ export default function AcademyDashboardPage() {
           </div>
         </header>
 
-        {/* Content */}
+        {/* CONTENT */}
         <main className="px-5 py-8 sm:px-8">
           <div className="mx-auto max-w-7xl">
-            {/* Welcome */}
+            {/* WELCOME */}
             <section className="relative overflow-hidden rounded-3xl border border-blue-400/10 bg-gradient-to-br from-blue-600/20 via-slate-900 to-cyan-500/10 p-7 sm:p-9">
               <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-blue-500/10 blur-3xl" />
 
@@ -324,7 +342,7 @@ export default function AcademyDashboardPage() {
               </div>
             </section>
 
-            {/* Statistics */}
+            {/* STATISTICS */}
             <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard
                 icon={BookOpen}
@@ -355,9 +373,9 @@ export default function AcademyDashboardPage() {
               />
             </section>
 
-            {/* Main Grid */}
+            {/* MAIN GRID */}
             <div className="mt-8 grid gap-8 xl:grid-cols-[1fr_360px]">
-              {/* Courses */}
+              {/* COURSES */}
               <section>
                 <div className="mb-5 flex items-center justify-between">
                   <div>
@@ -460,9 +478,9 @@ export default function AcademyDashboardPage() {
                 </div>
               </section>
 
-              {/* Right Column */}
+              {/* RIGHT COLUMN */}
               <aside className="space-y-6">
-                {/* Progress */}
+                {/* PROGRESS */}
                 <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -507,18 +525,16 @@ export default function AcademyDashboardPage() {
                   </div>
                 </div>
 
-                {/* Activity */}
+                {/* ACTIVITY */}
                 <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">
-                        Recent Activity
-                      </h3>
+                  <div>
+                    <h3 className="font-semibold">
+                      Recent Activity
+                    </h3>
 
-                      <p className="mt-1 text-xs text-slate-500">
-                        Your latest learning activity
-                      </p>
-                    </div>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Your latest learning activity
+                    </p>
                   </div>
 
                   <div className="mt-5 space-y-5">
@@ -543,7 +559,7 @@ export default function AcademyDashboardPage() {
                   </div>
                 </div>
 
-                {/* Certificate */}
+                {/* CERTIFICATE */}
                 <div className="rounded-2xl border border-yellow-400/10 bg-yellow-500/[0.04] p-6">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-yellow-500/10 text-yellow-400">
                     <Award className="h-5 w-5" />
@@ -568,16 +584,14 @@ export default function AcademyDashboardPage() {
           </div>
         </main>
 
-        {/* Footer */}
+        {/* FOOTER */}
         <footer className="border-t border-white/10 px-5 py-6 sm:px-8">
           <div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 text-xs text-slate-600 sm:flex-row">
             <span>
               © {new Date().getFullYear()} STACKRA Academy
             </span>
 
-            <span>
-              STACKRA TECHNOLOGIES
-            </span>
+            <span>STACKRA TECHNOLOGIES</span>
           </div>
         </footer>
       </div>
