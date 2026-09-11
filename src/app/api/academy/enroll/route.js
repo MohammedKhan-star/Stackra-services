@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Student from "@/models/Student";
 import Enrollment from "@/models/Enrollment";
+import { verifyAcademyToken } from "@/lib/academy-auth";
 
 const courses = {
   "full-stack-web-development": {
@@ -68,6 +69,10 @@ const courses = {
 
 export async function POST(request) {
   try {
+    // -----------------------------------------
+    // 1. Get authentication token
+    // -----------------------------------------
+
     const token = request.cookies.get("academy_token")?.value;
 
     if (!token) {
@@ -76,9 +81,34 @@ export async function POST(request) {
           success: false,
           message: "Please login before enrolling in a course.",
         },
-        { status: 401 }
+        {
+          status: 401,
+        }
       );
     }
+
+    // -----------------------------------------
+    // 2. Verify JWT
+    // -----------------------------------------
+
+    const student = await verifyAcademyToken(token);
+
+    if (!student?.studentId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Your login session has expired. Please login again.",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    // -----------------------------------------
+    // 3. Read request
+    // -----------------------------------------
 
     const body = await request.json();
 
@@ -90,9 +120,15 @@ export async function POST(request) {
           success: false,
           message: "Course is required.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
+
+    // -----------------------------------------
+    // 4. Find course
+    // -----------------------------------------
 
     const course = courses[courseSlug];
 
@@ -102,33 +138,25 @@ export async function POST(request) {
           success: false,
           message: "Course not found.",
         },
-        { status: 404 }
+        {
+          status: 404,
+        }
       );
     }
+
+    // -----------------------------------------
+    // 5. Connect MongoDB
+    // -----------------------------------------
 
     await connectDB();
 
-    /*
-     * Import authentication dynamically so the API can load
-     * even before ACADEMY_AUTH_SECRET is configured.
-     */
-    const { verifyAcademyToken } = await import(
-      "@/lib/academy-auth"
+    // -----------------------------------------
+    // 6. Find student
+    // -----------------------------------------
+
+    const studentRecord = await Student.findById(
+      student.studentId
     );
-
-    const student = await verifyAcademyToken(token);
-
-    if (!student?.studentId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Your login session has expired. Please login again.",
-        },
-        { status: 401 }
-      );
-    }
-
-    const studentRecord = await Student.findById(student.studentId);
 
     if (!studentRecord) {
       return NextResponse.json(
@@ -136,7 +164,9 @@ export async function POST(request) {
           success: false,
           message: "Student account not found.",
         },
-        { status: 404 }
+        {
+          status: 404,
+        }
       );
     }
 
@@ -146,71 +176,83 @@ export async function POST(request) {
           success: false,
           message: "Your account has been disabled.",
         },
-        { status: 403 }
+        {
+          status: 403,
+        }
       );
     }
 
-    const existingEnrollment = await Enrollment.findOne({
+    // -----------------------------------------
+    // 7. Check existing enrollment
+    // -----------------------------------------
+
+    let enrollment = await Enrollment.findOne({
       studentId: studentRecord._id,
       courseSlug,
     });
 
-    if (existingEnrollment) {
+    // -----------------------------------------
+    // 8. Existing enrollment
+    // -----------------------------------------
+
+    if (enrollment) {
       if (
-        existingEnrollment.status === "active" ||
-        existingEnrollment.status === "completed"
+        enrollment.status === "active" ||
+        enrollment.status === "completed"
       ) {
         return NextResponse.json(
           {
             success: false,
             message: "You are already enrolled in this course.",
-            enrollmentId: existingEnrollment._id.toString(),
-          },
-          { status: 409 }
-        );
-      }
-
-      if (existingEnrollment.status === "pending") {
-        return NextResponse.json(
-          {
-            success: true,
-            message: "A pending enrollment already exists.",
-            enrollmentId: existingEnrollment._id.toString(),
-            course: {
-              slug: courseSlug,
-              title: course.title,
-              price: course.price,
-              currency: "INR",
+            enrollment: {
+              id: enrollment._id.toString(),
+              courseSlug: enrollment.courseSlug,
+              courseTitle: enrollment.courseTitle,
+              amount: enrollment.amount,
+              currency: enrollment.currency,
+              paymentStatus: enrollment.paymentStatus,
+              status: enrollment.status,
             },
           },
-          { status: 200 }
+          {
+            status: 409,
+          }
         );
       }
 
-      existingEnrollment.status = "pending";
-      existingEnrollment.paymentStatus = "pending";
-      existingEnrollment.amount = course.price;
-      existingEnrollment.currency = "INR";
+      // Reuse pending/cancelled enrollment
+      enrollment.status = "pending";
+      enrollment.paymentStatus = "pending";
+      enrollment.amount = course.price;
+      enrollment.currency = "INR";
 
-      await existingEnrollment.save();
+      await enrollment.save();
 
       return NextResponse.json(
         {
           success: true,
           message: "Enrollment is ready for payment.",
-          enrollmentId: existingEnrollment._id.toString(),
-          course: {
-            slug: courseSlug,
-            title: course.title,
-            price: course.price,
-            currency: "INR",
+          enrollment: {
+            id: enrollment._id.toString(),
+            courseSlug: enrollment.courseSlug,
+            courseTitle: enrollment.courseTitle,
+            amount: enrollment.amount,
+            currency: enrollment.currency,
+            paymentStatus: enrollment.paymentStatus,
+            status: enrollment.status,
           },
         },
-        { status: 200 }
+        {
+          status: 200,
+        }
       );
     }
 
-    const enrollment = await Enrollment.create({
+    // -----------------------------------------
+    // 9. Create new enrollment
+    // -----------------------------------------
+
+    enrollment = await Enrollment.create({
       studentId: studentRecord._id,
 
       courseSlug,
@@ -234,22 +276,28 @@ export async function POST(request) {
       enrolledAt: null,
     });
 
+    // -----------------------------------------
+    // 10. Return enrollment
+    // -----------------------------------------
+
     return NextResponse.json(
       {
         success: true,
-
         message: "Enrollment created successfully.",
 
-        enrollmentId: enrollment._id.toString(),
-
-        course: {
-          slug: courseSlug,
-          title: course.title,
-          price: course.price,
-          currency: "INR",
+        enrollment: {
+          id: enrollment._id.toString(),
+          courseSlug: enrollment.courseSlug,
+          courseTitle: enrollment.courseTitle,
+          amount: enrollment.amount,
+          currency: enrollment.currency,
+          paymentStatus: enrollment.paymentStatus,
+          status: enrollment.status,
         },
       },
-      { status: 201 }
+      {
+        status: 201,
+      }
     );
   } catch (error) {
     console.error("ACADEMY ENROLLMENT ERROR:", error);
@@ -259,7 +307,9 @@ export async function POST(request) {
         success: false,
         message: "Unable to create enrollment.",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }
