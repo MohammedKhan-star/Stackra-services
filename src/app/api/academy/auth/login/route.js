@@ -8,7 +8,8 @@ export async function POST(request) {
   try {
     const body = await request.json();
 
-    const { email, password } = body;
+    const email = body.email?.trim().toLowerCase();
+    const password = body.password;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -16,18 +17,14 @@ export async function POST(request) {
           success: false,
           message: "Email and password are required.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
     await connectDB();
 
-    const normalizedEmail = email.trim().toLowerCase();
-
     const student = await Student.findOne({
-      email: normalizedEmail,
+      email: email,
     });
 
     if (!student) {
@@ -36,21 +33,27 @@ export async function POST(request) {
           success: false,
           message: "Invalid email or password.",
         },
-        {
-          status: 401,
-        }
+        { status: 401 }
       );
     }
 
-    if (!student.isActive) {
+    if (student.isActive === false) {
       return NextResponse.json(
         {
           success: false,
           message: "Your account has been disabled.",
         },
+        { status: 403 }
+      );
+    }
+
+    if (!student.password) {
+      return NextResponse.json(
         {
-          status: 403,
-        }
+          success: false,
+          message: "This account has an invalid password record. Please register again.",
+        },
+        { status: 401 }
       );
     }
 
@@ -65,9 +68,7 @@ export async function POST(request) {
           success: false,
           message: "Invalid email or password.",
         },
-        {
-          status: 401,
-        }
+        { status: 401 }
       );
     }
 
@@ -76,15 +77,13 @@ export async function POST(request) {
         success: true,
         message: "Login successful.",
         student: {
-          id: student._id,
+          id: student._id.toString(),
           fullName: student.fullName,
           email: student.email,
           role: student.role,
         },
       },
-      {
-        status: 200,
-      }
+      { status: 200 }
     );
   } catch (error) {
     console.error("ACADEMY LOGIN ERROR:", error);
@@ -92,11 +91,9 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Something went wrong while logging in.",
+        message: "Unable to login. Please try again.",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
