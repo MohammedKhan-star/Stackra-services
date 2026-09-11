@@ -66,7 +66,6 @@ export const metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-
     url: "https://stackratechnologies.com",
 
     title:
@@ -102,18 +101,14 @@ export const metadata = {
 
   icons: {
     icon: "/favicon.ico",
-
     shortcut: "/favicon-16x16.png",
-
     apple: "/apple-touch-icon.png",
   },
 };
 
 export const viewport = {
   width: "device-width",
-
   initialScale: 1,
-
   maximumScale: 5,
 
   themeColor: [
@@ -188,6 +183,7 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning
         className="bg-slate-50 text-slate-900 antialiased"
       >
+        {/* Organization Schema */}
         <Script
           id="organization-schema"
           type="application/ld+json"
@@ -197,7 +193,11 @@ export default function RootLayout({ children }) {
           }}
         />
 
-   
+        {/* Razorpay Checkout */}
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="afterInteractive"
+        />
 
         <main className="min-h-screen pt-0">
           {children}
