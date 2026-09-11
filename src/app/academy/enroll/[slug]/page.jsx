@@ -279,6 +279,7 @@ function getCourseIcon(category) {
   if (category === "Cyber Security") return ShieldCheck;
   if (category === "Programming") return Code2;
   if (category === "Web Development") return Laptop;
+
   return BookOpen;
 }
 
@@ -290,6 +291,7 @@ export default function EnrollmentPage() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState(false);
 
   if (!course) {
     return (
@@ -317,12 +319,139 @@ export default function EnrollmentPage() {
 
   const Icon = getCourseIcon(course.category);
 
+  const verifyPayment = async ({
+    enrollmentId,
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+  }) => {
+    const response = await fetch("/api/academy/payment/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        enrollmentId,
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Payment verification failed.");
+    }
+
+    return data;
+  };
+
+  const openRazorpayCheckout = async (enrollment) => {
+    if (!window.Razorpay) {
+      throw new Error(
+        "Razorpay Checkout has not loaded. Please refresh the page and try again."
+      );
+    }
+
+    const orderResponse = await fetch(
+      "/api/academy/payment/create-order",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          enrollmentId: enrollment.id,
+        }),
+      }
+    );
+
+    const orderData = await orderResponse.json();
+
+    if (!orderResponse.ok) {
+      throw new Error(
+        orderData.message || "Unable to create payment order."
+      );
+    }
+
+    const options = {
+      key: orderData.razorpayKeyId,
+      amount: orderData.order.amount,
+      currency: orderData.order.currency,
+      name: "STACKRA Academy",
+      description: enrollment.courseTitle,
+      order_id: orderData.order.id,
+
+      handler: async function (paymentResponse) {
+        try {
+          setLoading(true);
+          setMessage("Verifying your payment...");
+
+          await verifyPayment({
+            enrollmentId: enrollment.id,
+            razorpay_order_id: paymentResponse.razorpay_order_id,
+            razorpay_payment_id: paymentResponse.razorpay_payment_id,
+            razorpay_signature: paymentResponse.razorpay_signature,
+          });
+
+          setSuccess(true);
+          setMessage(
+            "Payment successful! Your course is now active."
+          );
+
+          setTimeout(() => {
+            window.location.href = "/academy/dashboard";
+          }, 1500);
+        } catch (error) {
+          console.error("Payment verification error:", error);
+
+          setMessage(
+            error.message ||
+              "Payment was received but verification failed. Please contact support."
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+
+      modal: {
+        ondismiss: function () {
+          setLoading(false);
+          setMessage(
+            "Payment window closed. Your enrollment is still pending."
+          );
+        },
+      },
+
+      theme: {
+        color: "#2563eb",
+      },
+    };
+
+    const razorpay = new window.Razorpay(options);
+
+    razorpay.on("payment.failed", function (response) {
+      console.error("RAZORPAY PAYMENT FAILED:", response.error);
+
+      setLoading(false);
+
+      setMessage(
+        response.error?.description ||
+          "Payment failed. Please try again."
+      );
+    });
+
+    razorpay.open();
+  };
+
   const handleEnrollment = async () => {
     try {
       setLoading(true);
       setMessage("");
+      setSuccess(false);
 
-      const response = await fetch("/api/academy/enroll", {
+      const enrollmentResponse = await fetch("/api/academy/enroll", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -332,30 +461,36 @@ export default function EnrollmentPage() {
         }),
       });
 
-      const data = await response.json();
+      const enrollmentData = await enrollmentResponse.json();
 
-      if (response.status === 401) {
-        window.location.href = `/academy/login?redirect=/academy/enroll/${slug}`;
+      if (enrollmentResponse.status === 401) {
+        window.location.href =
+          `/academy/login?redirect=/academy/enroll/${slug}`;
+
         return;
       }
 
-      if (!response.ok) {
-        setMessage(data.message || "Unable to start enrollment.");
-        return;
+      if (!enrollmentResponse.ok) {
+        throw new Error(
+          enrollmentData.message || "Unable to start enrollment."
+        );
       }
 
-      if (data.alreadyEnrolled) {
-        setMessage("You already have an enrollment for this course.");
-        return;
+      const enrollment = enrollmentData.enrollment;
+
+      if (!enrollment?.id) {
+        throw new Error("Enrollment information is missing.");
       }
+
+      await openRazorpayCheckout(enrollment);
+    } catch (error) {
+      console.error("Enrollment/payment error:", error);
 
       setMessage(
-        "Enrollment created successfully. Payment setup will be connected next."
+        error.message ||
+          "Unable to start the enrollment process. Please try again."
       );
-    } catch (error) {
-      console.error("Enrollment error:", error);
-      setMessage("Unable to connect to the server. Please try again.");
-    } finally {
+
       setLoading(false);
     }
   };
@@ -382,10 +517,9 @@ export default function EnrollmentPage() {
         </div>
       </header>
 
-      {/* Main */}
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
-          {/* Course Information */}
+          {/* Course information */}
           <div>
             <div className="mb-6 rounded-3xl bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 p-6 text-white shadow-xl sm:p-10">
               <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15">
@@ -413,39 +547,38 @@ export default function EnrollmentPage() {
               <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
                 <div className="rounded-2xl bg-white/10 p-4">
                   <Clock3 size={20} />
-
-                  <p className="mt-2 text-xs text-blue-100">Duration</p>
-
+                  <p className="mt-2 text-xs text-blue-100">
+                    Duration
+                  </p>
                   <p className="mt-1 font-bold">{course.duration}</p>
                 </div>
 
                 <div className="rounded-2xl bg-white/10 p-4">
                   <BookOpen size={20} />
-
-                  <p className="mt-2 text-xs text-blue-100">Lessons</p>
-
+                  <p className="mt-2 text-xs text-blue-100">
+                    Lessons
+                  </p>
                   <p className="mt-1 font-bold">{course.lessons}</p>
                 </div>
 
                 <div className="rounded-2xl bg-white/10 p-4">
                   <GraduationCap size={20} />
-
-                  <p className="mt-2 text-xs text-blue-100">Certificate</p>
-
+                  <p className="mt-2 text-xs text-blue-100">
+                    Certificate
+                  </p>
                   <p className="mt-1 font-bold">Included</p>
                 </div>
               </div>
             </div>
 
-            {/* What You Learn */}
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
               <h2 className="text-2xl font-extrabold">
                 What you will learn
               </h2>
 
               <p className="mt-2 text-sm text-slate-500">
-                Practical skills designed to help you learn and build with
-                confidence.
+                Practical skills designed to help you learn and build
+                with confidence.
               </p>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -467,7 +600,6 @@ export default function EnrollmentPage() {
               </div>
             </div>
 
-            {/* Included */}
             <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
               <h2 className="text-2xl font-extrabold">
                 Your enrollment includes
@@ -475,61 +607,49 @@ export default function EnrollmentPage() {
 
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
                 <div className="flex gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                    <BookOpen size={22} />
-                  </div>
-
+                  <BookOpen className="text-blue-600" size={24} />
                   <div>
-                    <h3 className="font-bold">Structured Lessons</h3>
-
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Follow a structured learning path from fundamentals to
-                      practical skills.
+                    <h3 className="font-bold">
+                      Structured Lessons
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Follow a structured learning path.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-                    <Laptop size={22} />
-                  </div>
-
+                  <Laptop className="text-purple-600" size={24} />
                   <div>
-                    <h3 className="font-bold">Practical Learning</h3>
-
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Learn through exercises, examples and project-based
-                      activities.
+                    <h3 className="font-bold">
+                      Practical Learning
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Learn through practical exercises and projects.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-600">
-                    <Award size={22} />
-                  </div>
-
+                  <Award className="text-green-600" size={24} />
                   <div>
-                    <h3 className="font-bold">Course Certificate</h3>
-
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Earn a certificate after successfully completing the
-                      course requirements.
+                    <h3 className="font-bold">
+                      Course Certificate
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Certificate after successful completion.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
-                    <Users size={22} />
-                  </div>
-
+                  <Users className="text-orange-600" size={24} />
                   <div>
-                    <h3 className="font-bold">Student Dashboard</h3>
-
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Access your enrolled courses and learning progress from
-                      your academy dashboard.
+                    <h3 className="font-bold">
+                      Student Dashboard
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Track your learning progress.
                     </p>
                   </div>
                 </div>
@@ -537,11 +657,13 @@ export default function EnrollmentPage() {
             </div>
           </div>
 
-          {/* Enrollment Card */}
+          {/* Payment card */}
           <aside className="lg:sticky lg:top-6 lg:h-fit">
             <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
               <div className="bg-slate-900 p-6 text-white">
-                <p className="text-sm text-slate-300">Course Enrollment</p>
+                <p className="text-sm text-slate-300">
+                  Course Enrollment
+                </p>
 
                 <h2 className="mt-2 text-xl font-extrabold">
                   {course.title}
@@ -549,49 +671,41 @@ export default function EnrollmentPage() {
               </div>
 
               <div className="p-6">
-                <div className="flex items-end justify-between border-b border-slate-200 pb-6">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                      Course Fee
-                    </p>
+                <div className="border-b border-slate-200 pb-6">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Course Fee
+                  </p>
 
-                    <p className="mt-1 text-4xl font-extrabold text-slate-900">
-                      ₹{course.price.toLocaleString("en-IN")}
-                    </p>
-                  </div>
-
-                  <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
-                    One-time
-                  </span>
+                  <p className="mt-1 text-4xl font-extrabold text-slate-900">
+                    ₹{course.price.toLocaleString("en-IN")}
+                  </p>
                 </div>
 
                 <div className="space-y-4 py-6">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Course</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">
+                      Course
+                    </span>
 
-                    <span className="max-w-[190px] text-right font-semibold text-slate-800">
+                    <span className="max-w-[200px] text-right font-semibold">
                       {course.title}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Duration</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">
+                      Duration
+                    </span>
 
-                    <span className="font-semibold text-slate-800">
+                    <span className="font-semibold">
                       {course.duration}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Lessons</span>
-
-                    <span className="font-semibold text-slate-800">
-                      {course.lessons}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">
+                      Certificate
                     </span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Certificate</span>
 
                     <span className="font-semibold text-green-600">
                       Included
@@ -599,56 +713,50 @@ export default function EnrollmentPage() {
                   </div>
                 </div>
 
-                {/* Enrollment Message */}
                 {message && (
-                  <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-                    <p className="text-sm font-semibold leading-6 text-blue-800">
+                  <div
+                    className={`mb-5 rounded-2xl p-4 ${
+                      success
+                        ? "bg-green-50 text-green-800"
+                        : "bg-blue-50 text-blue-800"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold leading-6">
                       {message}
                     </p>
                   </div>
                 )}
 
-                <div className="rounded-2xl bg-blue-50 p-4">
-                  <p className="text-sm font-bold text-blue-900">
-                    Ready to start?
-                  </p>
+                <button
+                  type="button"
+                  onClick={handleEnrollment}
+                  disabled={loading}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-4 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading
+                    ? "Processing..."
+                    : `Pay ₹${course.price.toLocaleString("en-IN")}`}
 
-                  <p className="mt-1 text-xs leading-5 text-blue-700">
-                    Login to your student account and continue with course
-                    enrollment.
-                  </p>
-                </div>
+                  {!loading && <ArrowRight size={18} />}
+                </button>
 
-                <div className="mt-6">
-                  <button
-                    type="button"
-                    onClick={handleEnrollment}
-                    disabled={loading}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {loading
-                      ? "Creating Enrollment..."
-                      : "Continue to Enrollment"}
-
-                    {!loading && <ArrowRight size={18} />}
-                  </button>
-                </div>
-
-                <div className="mt-4 text-center">
-                  <Link
-                    href="/academy/courses"
-                    className="text-xs font-semibold text-slate-500 hover:text-blue-600"
-                  >
-                    Choose a different course
-                  </Link>
-                </div>
+                <p className="mt-4 text-center text-xs leading-5 text-slate-500">
+                  Secure payment powered by Razorpay.
+                </p>
 
                 <div className="mt-6 border-t border-slate-200 pt-5">
                   <p className="text-center text-xs leading-5 text-slate-500">
-                    Your enrollment will remain pending until the payment is
-                    successfully completed and verified.
+                    Your course will become active only after the payment
+                    is successfully verified.
                   </p>
                 </div>
+
+                <Link
+                  href="/academy/courses"
+                  className="mt-5 block text-center text-xs font-semibold text-slate-500 hover:text-blue-600"
+                >
+                  Choose a different course
+                </Link>
               </div>
             </div>
           </aside>
