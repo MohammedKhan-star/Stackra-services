@@ -6,18 +6,12 @@ import Student from "@/models/Student";
 
 export async function POST(request) {
   try {
-    // -----------------------------------------
-    // 1. Read request body
-    // -----------------------------------------
     const body = await request.json();
 
     const fullName = body.fullName?.trim();
     const email = body.email?.trim().toLowerCase();
     const password = body.password;
 
-    // -----------------------------------------
-    // 2. Validate input
-    // -----------------------------------------
     if (!fullName) {
       return NextResponse.json(
         {
@@ -58,14 +52,8 @@ export async function POST(request) {
       );
     }
 
-    // -----------------------------------------
-    // 3. Connect to MongoDB
-    // -----------------------------------------
     await connectDB();
 
-    // -----------------------------------------
-    // 4. Check if student already exists
-    // -----------------------------------------
     const existingStudent = await Student.findOne({ email });
 
     if (existingStudent) {
@@ -78,14 +66,8 @@ export async function POST(request) {
       );
     }
 
-    // -----------------------------------------
-    // 5. Hash password
-    // -----------------------------------------
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // -----------------------------------------
-    // 6. Create student
-    // -----------------------------------------
     const student = await Student.create({
       fullName,
       email,
@@ -94,9 +76,6 @@ export async function POST(request) {
       isActive: true,
     });
 
-    // -----------------------------------------
-    // 7. Return success
-    // -----------------------------------------
     return NextResponse.json(
       {
         success: true,
@@ -113,7 +92,6 @@ export async function POST(request) {
   } catch (error) {
     console.error("ACADEMY REGISTRATION ERROR:", error);
 
-    // MongoDB duplicate-key protection
     if (error?.code === 11000) {
       return NextResponse.json(
         {
