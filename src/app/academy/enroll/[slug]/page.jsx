@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -279,16 +282,83 @@ function getCourseIcon(category) {
   return BookOpen;
 }
 
-export default async function EnrollmentPage({ params }) {
-  const { slug } = await params;
+export default function EnrollmentPage() {
+  const params = useParams();
+  const slug = params?.slug;
 
   const course = courses[slug];
 
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
   if (!course) {
-    notFound();
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+        <div className="text-center">
+          <h1 className="text-3xl font-extrabold text-slate-900">
+            Course Not Found
+          </h1>
+
+          <p className="mt-3 text-slate-500">
+            The course you are looking for does not exist.
+          </p>
+
+          <Link
+            href="/academy/courses"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700"
+          >
+            <ArrowLeft size={18} />
+            Back to Courses
+          </Link>
+        </div>
+      </main>
+    );
   }
 
   const Icon = getCourseIcon(course.category);
+
+  const handleEnrollment = async () => {
+    try {
+      setLoading(true);
+      setMessage("");
+
+      const response = await fetch("/api/academy/enroll", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          courseSlug: slug,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 401) {
+        window.location.href = `/academy/login?redirect=/academy/enroll/${slug}`;
+        return;
+      }
+
+      if (!response.ok) {
+        setMessage(data.message || "Unable to start enrollment.");
+        return;
+      }
+
+      if (data.alreadyEnrolled) {
+        setMessage("You already have an enrollment for this course.");
+        return;
+      }
+
+      setMessage(
+        "Enrollment created successfully. Payment setup will be connected next."
+      );
+    } catch (error) {
+      console.error("Enrollment error:", error);
+      setMessage("Unable to connect to the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -297,7 +367,7 @@ export default async function EnrollmentPage({ params }) {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link
             href="/academy/courses"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-blue-600"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-600"
           >
             <ArrowLeft size={18} />
             Back to Courses
@@ -318,16 +388,16 @@ export default async function EnrollmentPage({ params }) {
           {/* Course Information */}
           <div>
             <div className="mb-6 rounded-3xl bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 p-6 text-white shadow-xl sm:p-10">
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15">
                 <Icon size={32} />
               </div>
 
               <div className="mb-4 flex flex-wrap gap-2">
-                <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
+                <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
                   {course.category}
                 </span>
 
-                <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
+                <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
                   {course.level}
                 </span>
               </div>
@@ -341,27 +411,33 @@ export default async function EnrollmentPage({ params }) {
               </p>
 
               <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                <div className="rounded-2xl bg-white/10 p-4">
                   <Clock3 size={20} />
+
                   <p className="mt-2 text-xs text-blue-100">Duration</p>
+
                   <p className="mt-1 font-bold">{course.duration}</p>
                 </div>
 
-                <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                <div className="rounded-2xl bg-white/10 p-4">
                   <BookOpen size={20} />
+
                   <p className="mt-2 text-xs text-blue-100">Lessons</p>
+
                   <p className="mt-1 font-bold">{course.lessons}</p>
                 </div>
 
-                <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                <div className="rounded-2xl bg-white/10 p-4">
                   <GraduationCap size={20} />
+
                   <p className="mt-2 text-xs text-blue-100">Certificate</p>
+
                   <p className="mt-1 font-bold">Included</p>
                 </div>
               </div>
             </div>
 
-            {/* What You Will Learn */}
+            {/* What You Learn */}
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
               <h2 className="text-2xl font-extrabold">
                 What you will learn
@@ -405,6 +481,7 @@ export default async function EnrollmentPage({ params }) {
 
                   <div>
                     <h3 className="font-bold">Structured Lessons</h3>
+
                     <p className="mt-1 text-sm leading-6 text-slate-500">
                       Follow a structured learning path from fundamentals to
                       practical skills.
@@ -419,6 +496,7 @@ export default async function EnrollmentPage({ params }) {
 
                   <div>
                     <h3 className="font-bold">Practical Learning</h3>
+
                     <p className="mt-1 text-sm leading-6 text-slate-500">
                       Learn through exercises, examples and project-based
                       activities.
@@ -433,6 +511,7 @@ export default async function EnrollmentPage({ params }) {
 
                   <div>
                     <h3 className="font-bold">Course Certificate</h3>
+
                     <p className="mt-1 text-sm leading-6 text-slate-500">
                       Earn a certificate after successfully completing the
                       course requirements.
@@ -447,6 +526,7 @@ export default async function EnrollmentPage({ params }) {
 
                   <div>
                     <h3 className="font-bold">Student Dashboard</h3>
+
                     <p className="mt-1 text-sm leading-6 text-slate-500">
                       Access your enrolled courses and learning progress from
                       your academy dashboard.
@@ -488,13 +568,15 @@ export default async function EnrollmentPage({ params }) {
                 <div className="space-y-4 py-6">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500">Course</span>
-                    <span className="font-semibold text-slate-800">
+
+                    <span className="max-w-[190px] text-right font-semibold text-slate-800">
                       {course.title}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500">Duration</span>
+
                     <span className="font-semibold text-slate-800">
                       {course.duration}
                     </span>
@@ -502,6 +584,7 @@ export default async function EnrollmentPage({ params }) {
 
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500">Lessons</span>
+
                     <span className="font-semibold text-slate-800">
                       {course.lessons}
                     </span>
@@ -509,44 +592,61 @@ export default async function EnrollmentPage({ params }) {
 
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500">Certificate</span>
+
                     <span className="font-semibold text-green-600">
                       Included
                     </span>
                   </div>
                 </div>
 
+                {/* Enrollment Message */}
+                {message && (
+                  <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                    <p className="text-sm font-semibold leading-6 text-blue-800">
+                      {message}
+                    </p>
+                  </div>
+                )}
+
                 <div className="rounded-2xl bg-blue-50 p-4">
                   <p className="text-sm font-bold text-blue-900">
-                    Student account required
+                    Ready to start?
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-blue-700">
-                    Create your STACKRA Academy account or login before
-                    continuing with enrollment.
+                    Login to your student account and continue with course
+                    enrollment.
                   </p>
                 </div>
 
-                <div className="mt-6 space-y-3">
-                  <Link
-                    href={`/academy/register?course=${course.slug}`}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-blue-700"
+                <div className="mt-6">
+                  <button
+                    type="button"
+                    onClick={handleEnrollment}
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Create Student Account
-                    <ArrowRight size={18} />
-                  </Link>
+                    {loading
+                      ? "Creating Enrollment..."
+                      : "Continue to Enrollment"}
 
+                    {!loading && <ArrowRight size={18} />}
+                  </button>
+                </div>
+
+                <div className="mt-4 text-center">
                   <Link
-                    href={`/academy/login?redirect=/academy/enroll/${course.slug}`}
-                    className="flex w-full items-center justify-center rounded-xl border border-slate-300 px-5 py-3.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                    href="/academy/courses"
+                    className="text-xs font-semibold text-slate-500 hover:text-blue-600"
                   >
-                    Already have an account? Login
+                    Choose a different course
                   </Link>
                 </div>
 
                 <div className="mt-6 border-t border-slate-200 pt-5">
                   <p className="text-center text-xs leading-5 text-slate-500">
-                    Secure online payment will be connected in the next
-                    enrollment stage.
+                    Your enrollment will remain pending until the payment is
+                    successfully completed and verified.
                   </p>
                 </div>
               </div>
