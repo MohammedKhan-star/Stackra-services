@@ -9,6 +9,7 @@ import {
   Code2,
   Database,
   Filter,
+  Keyboard,
   Laptop,
   Search,
   ShieldCheck,
@@ -115,6 +116,39 @@ const courses = [
     lessons: 50,
     duration: "14 Hours",
   },
+  {
+    id: 10,
+    title: "MS Office",
+    slug: "ms-office",
+    description:
+      "Master Microsoft Word, Excel and PowerPoint through practical exercises and real-world office tasks.",
+    category: "Office Productivity",
+    level: "Beginner",
+    lessons: 30,
+    duration: "15 Hours",
+  },
+  {
+    id: 11,
+    title: "Typing Mastery",
+    slug: "typing-mastery",
+    description:
+      "Improve your typing speed, accuracy and keyboard skills through structured practical training.",
+    category: "Computer Skills",
+    level: "Beginner",
+    lessons: 20,
+    duration: "10 Hours",
+  },
+  {
+    id: 12,
+    title: "Python Programming",
+    slug: "python-programming",
+    description:
+      "Learn Python programming from the fundamentals to practical applications through hands-on exercises and projects.",
+    category: "Programming",
+    level: "Beginner",
+    lessons: 40,
+    duration: "20 Hours",
+  },
 ];
 
 const categories = [
@@ -125,6 +159,8 @@ const categories = [
   "Database",
   "Cyber Security",
   "Business & Technology",
+  "Office Productivity",
+  "Computer Skills",
 ];
 
 const categoryIcons = {
@@ -134,6 +170,8 @@ const categoryIcons = {
   Database: Database,
   "Cyber Security": ShieldCheck,
   "Business & Technology": BookOpen,
+  "Office Productivity": BookOpen,
+  "Computer Skills": Keyboard,
 };
 
 export default function CoursesPage() {
@@ -143,12 +181,14 @@ export default function CoursesPage() {
   const [mobileFilter, setMobileFilter] = useState(false);
 
   const filteredCourses = useMemo(() => {
-    return courses.filter((course) => {
-      const searchText = search.toLowerCase();
+    const searchText = search.trim().toLowerCase();
 
+    return courses.filter((course) => {
       const matchesSearch =
+        !searchText ||
         course.title.toLowerCase().includes(searchText) ||
-        course.description.toLowerCase().includes(searchText);
+        course.description.toLowerCase().includes(searchText) ||
+        course.category.toLowerCase().includes(searchText);
 
       const matchesCategory =
         category === "All" || course.category === category;
@@ -166,12 +206,25 @@ export default function CoursesPage() {
     setLevel("All");
   };
 
+  const handleCategoryChange = (item) => {
+    setCategory(item);
+    setMobileFilter(false);
+  };
+
+  const handleLevelChange = (item) => {
+    setLevel(item);
+    setMobileFilter(false);
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-          <Link href="/academy" className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-8">
+          <Link
+            href="/academy"
+            className="flex items-center gap-3"
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-white">
               <BookOpen size={21} />
             </div>
@@ -190,7 +243,7 @@ export default function CoursesPage() {
           <div className="hidden items-center gap-8 md:flex">
             <Link
               href="/academy"
-              className="text-sm font-medium text-slate-500 hover:text-slate-950"
+              className="text-sm font-medium text-slate-500 transition hover:text-slate-950"
             >
               Home
             </Link>
@@ -204,15 +257,15 @@ export default function CoursesPage() {
 
             <Link
               href="/academy/categories"
-              className="text-sm font-medium text-slate-500 hover:text-slate-950"
+              className="text-sm font-medium text-slate-500 transition hover:text-slate-950"
             >
               Categories
             </Link>
           </div>
 
           <Link
-            href="/register"
-            className="rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white"
+            href="/academy/register"
+            className="rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 sm:px-5"
           >
             Get Started
           </Link>
@@ -221,7 +274,7 @@ export default function CoursesPage() {
 
       {/* HEADER */}
       <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+        <div className="mx-auto max-w-7xl px-5 py-14 sm:px-6 sm:py-16 lg:px-8">
           <div className="max-w-3xl">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
               STACKRA Academy
@@ -231,14 +284,14 @@ export default function CoursesPage() {
               Explore our courses.
             </h1>
 
-            <p className="mt-5 text-lg leading-8 text-slate-600">
+            <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
               Learn modern technology through structured lessons,
               practical projects and hands-on learning.
             </p>
           </div>
 
           {/* SEARCH */}
-          <div className="relative mt-10 max-w-3xl">
+          <div className="relative mt-8 max-w-3xl sm:mt-10">
             <Search
               size={21}
               className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"
@@ -249,13 +302,15 @@ export default function CoursesPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search courses..."
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-4 pl-14 pr-12 outline-none transition focus:border-slate-950 focus:bg-white"
+              aria-label="Search courses"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-4 pl-14 pr-12 text-sm outline-none transition focus:border-slate-950 focus:bg-white sm:text-base"
             />
 
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
+                aria-label="Clear search"
                 className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-2 hover:bg-slate-200"
               >
                 <X size={17} />
@@ -266,23 +321,24 @@ export default function CoursesPage() {
       </section>
 
       {/* CONTENT */}
-      <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-        {/* MOBILE FILTER */}
+      <section className="mx-auto max-w-7xl px-5 py-10 sm:px-6 sm:py-12 lg:px-8">
+        {/* MOBILE FILTER BUTTON */}
         <button
           type="button"
           onClick={() => setMobileFilter(!mobileFilter)}
-          className="mb-6 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold lg:hidden"
+          className="mb-6 flex min-h-12 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold lg:hidden"
         >
           <Filter size={17} />
-          Filters
+
+          {mobileFilter ? "Hide Filters" : "Show Filters"}
         </button>
 
-        <div className="grid gap-10 lg:grid-cols-[250px_1fr]">
+        <div className="grid gap-8 lg:grid-cols-[250px_1fr] lg:gap-10">
           {/* FILTERS */}
           <aside
             className={`${
               mobileFilter ? "block" : "hidden"
-            } rounded-2xl border border-slate-200 bg-white p-6 lg:block`}
+            } rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 lg:block`}
           >
             <div>
               <h3 className="font-bold">
@@ -294,8 +350,8 @@ export default function CoursesPage() {
                   <button
                     type="button"
                     key={item}
-                    onClick={() => setCategory(item)}
-                    className={`w-full rounded-lg px-3 py-2.5 text-left text-sm transition ${
+                    onClick={() => handleCategoryChange(item)}
+                    className={`min-h-11 w-full rounded-lg px-3 py-2.5 text-left text-sm transition ${
                       category === item
                         ? "bg-slate-950 font-semibold text-white"
                         : "text-slate-600 hover:bg-slate-100"
@@ -322,8 +378,8 @@ export default function CoursesPage() {
                   <button
                     type="button"
                     key={item}
-                    onClick={() => setLevel(item)}
-                    className={`w-full rounded-lg px-3 py-2.5 text-left text-sm transition ${
+                    onClick={() => handleLevelChange(item)}
+                    className={`min-h-11 w-full rounded-lg px-3 py-2.5 text-left text-sm transition ${
                       level === item
                         ? "bg-slate-950 font-semibold text-white"
                         : "text-slate-600 hover:bg-slate-100"
@@ -334,11 +390,23 @@ export default function CoursesPage() {
                 ))}
               </div>
             </div>
+
+            {(category !== "All" ||
+              level !== "All" ||
+              search) && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-8 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold transition hover:bg-slate-100"
+              >
+                Clear All Filters
+              </button>
+            )}
           </aside>
 
           {/* RESULTS */}
           <div>
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-500">
                 Showing{" "}
                 <span className="font-semibold text-slate-950">
@@ -346,10 +414,26 @@ export default function CoursesPage() {
                 </span>{" "}
                 courses
               </p>
+
+              {(category !== "All" || level !== "All") && (
+                <div className="flex flex-wrap gap-2">
+                  {category !== "All" && (
+                    <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium">
+                      {category}
+                    </span>
+                  )}
+
+                  {level !== "All" && (
+                    <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium">
+                      {level}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {filteredCourses.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-16 text-center">
+              <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center sm:p-16">
                 <Search
                   className="mx-auto text-slate-400"
                   size={32}
@@ -359,20 +443,20 @@ export default function CoursesPage() {
                   No courses found
                 </h3>
 
-                <p className="mt-2 text-slate-500">
+                <p className="mt-2 text-sm text-slate-500 sm:text-base">
                   Try a different search term or category.
                 </p>
 
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="mt-6 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white"
+                  className="mt-6 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   Clear Filters
                 </button>
               </div>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-5 md:grid-cols-2">
                 {filteredCourses.map((course) => {
                   const Icon =
                     categoryIcons[course.category] || BookOpen;
@@ -383,7 +467,8 @@ export default function CoursesPage() {
                       href={`/academy/courses/${course.slug}`}
                       className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:shadow-xl"
                     >
-                      <div className="flex h-40 items-center justify-center bg-slate-950 text-white">
+                      {/* COURSE IMAGE AREA */}
+                      <div className="flex h-36 items-center justify-center bg-slate-950 text-white sm:h-40">
                         <Icon
                           size={54}
                           strokeWidth={1.4}
@@ -391,13 +476,14 @@ export default function CoursesPage() {
                         />
                       </div>
 
-                      <div className="p-6">
-                        <div className="flex items-center justify-between gap-3">
+                      {/* COURSE CONTENT */}
+                      <div className="p-5 sm:p-6">
+                        <div className="flex items-start justify-between gap-3">
                           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">
                             {course.category}
                           </span>
 
-                          <span className="text-xs font-medium text-slate-500">
+                          <span className="shrink-0 text-xs font-medium text-slate-500">
                             {course.level}
                           </span>
                         </div>
@@ -410,7 +496,7 @@ export default function CoursesPage() {
                           {course.description}
                         </p>
 
-                        <div className="mt-6 flex items-center gap-4 border-t border-slate-100 pt-5 text-sm text-slate-500">
+                        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-100 pt-5 text-sm text-slate-500">
                           <span>
                             {course.lessons} Lessons
                           </span>
@@ -422,13 +508,17 @@ export default function CoursesPage() {
                           </span>
                         </div>
 
-                        <div className="mt-6 flex items-center gap-2 text-sm font-bold">
-                          View Course
+                        <div className="mt-6 flex items-center justify-between">
+                          <span className="text-sm font-bold">
+                            View Course
+                          </span>
 
-                          <ArrowRight
-                            size={17}
-                            className="transition group-hover:translate-x-1"
-                          />
+                          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 transition group-hover:bg-slate-950 group-hover:text-white">
+                            <ArrowRight
+                              size={17}
+                              className="transition group-hover:translate-x-0.5"
+                            />
+                          </span>
                         </div>
                       </div>
                     </Link>
@@ -441,30 +531,30 @@ export default function CoursesPage() {
       </section>
 
       {/* CTA */}
-      <section className="mx-auto max-w-7xl px-6 pb-20 lg:px-8">
-        <div className="rounded-3xl bg-slate-950 px-8 py-14 text-center text-white sm:px-16">
+      <section className="mx-auto max-w-7xl px-5 pb-16 sm:px-6 sm:pb-20 lg:px-8">
+        <div className="rounded-3xl bg-slate-950 px-6 py-12 text-center text-white sm:px-16 sm:py-14">
           <h2 className="text-3xl font-bold sm:text-4xl">
             Ready to start learning?
           </h2>
 
-          <p className="mx-auto mt-4 max-w-2xl leading-7 text-slate-400">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
             Create your STACKRA Academy account and start
             building your technology skills.
           </p>
 
           <Link
-            href="/register"
-            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 font-semibold text-slate-950"
+            href="/academy/register"
+            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
           >
-            Create Account
+            Create Student Account
             <ArrowRight size={18} />
           </Link>
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-slate-200">
-        <div className="mx-auto max-w-7xl px-6 py-8 text-sm text-slate-500 lg:px-8">
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="mx-auto max-w-7xl px-5 py-8 text-center text-sm text-slate-500 sm:px-6 lg:px-8">
           © {new Date().getFullYear()} STACKRA TECHNOLOGIES.
           All rights reserved.
         </div>
