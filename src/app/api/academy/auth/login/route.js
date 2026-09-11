@@ -12,6 +12,7 @@ export async function POST(request) {
     const email = body.email?.trim().toLowerCase();
     const password = body.password;
 
+    // Validate input
     if (!email || !password) {
       return NextResponse.json(
         {
@@ -22,8 +23,10 @@ export async function POST(request) {
       );
     }
 
+    // Connect to MongoDB
     await connectDB();
 
+    // Find student
     const student = await Student.findOne({ email });
 
     if (!student) {
@@ -36,6 +39,7 @@ export async function POST(request) {
       );
     }
 
+    // Check account status
     if (student.isActive === false) {
       return NextResponse.json(
         {
@@ -46,6 +50,7 @@ export async function POST(request) {
       );
     }
 
+    // Check password exists
     if (!student.password) {
       return NextResponse.json(
         {
@@ -56,6 +61,7 @@ export async function POST(request) {
       );
     }
 
+    // Compare password with hashed password
     const passwordMatch = await bcrypt.compare(
       password,
       student.password
@@ -71,15 +77,18 @@ export async function POST(request) {
       );
     }
 
+    // Student information for JWT
     const studentData = {
       id: student._id.toString(),
       fullName: student.fullName,
       email: student.email,
-      role: student.role,
+      role: student.role || "student",
     };
 
+    // Create JWT token
     const token = await createAcademyToken(studentData);
 
+    // Create response
     const response = NextResponse.json(
       {
         success: true,
@@ -89,6 +98,7 @@ export async function POST(request) {
       { status: 200 }
     );
 
+    // Secure authentication cookie
     response.cookies.set("academy_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
