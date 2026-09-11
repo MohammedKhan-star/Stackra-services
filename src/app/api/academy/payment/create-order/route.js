@@ -1,34 +1,19 @@
 import { NextResponse } from "next/server";
-import Razorpay from "razorpay";
 
 import connectDB from "@/lib/mongodb";
 import Enrollment from "@/models/Enrollment";
+import Student from "@/models/Student";
 import { verifyAcademyToken } from "@/lib/academy-auth";
 
 export async function POST(request) {
   try {
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
-    if (!keyId || !keySecret) {
-      console.error("Razorpay environment variables are missing.");
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Payment system is not configured yet.",
-        },
-        { status: 500 }
-      );
-    }
-
     const token = request.cookies.get("academy_token")?.value;
 
     if (!token) {
       return NextResponse.json(
         {
           success: false,
-          message: "Please login before making a payment.",
+          message: "Please login to continue.",
         },
         { status: 401 }
       );
@@ -47,8 +32,7 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-
-    const enrollmentId = body.enrollmentId?.trim();
+    const enrollmentId = body.enrollmentId;
 
     if (!enrollmentId) {
       return NextResponse.json(
@@ -62,9 +46,31 @@ export async function POST(request) {
 
     await connectDB();
 
+    const dbStudent = await Student.findById(student.studentId);
+
+    if (!dbStudent) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Student account not found.",
+        },
+        { status: 404 }
+      );
+    }
+
+    if (dbStudent.isActive === false) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Your student account is disabled.",
+        },
+        { status: 403 }
+      );
+    }
+
     const enrollment = await Enrollment.findOne({
       _id: enrollmentId,
-      studentId: student.studentId,
+      studentId: dbStudent._id,
     });
 
     if (!enrollment) {
@@ -77,7 +83,11 @@ export async function POST(request) {
       );
     }
 
-    if (enrollment.paymentStatus === "paid") {
+    if (
+      enrollment.status === "active" ||
+      enrollment.status === "completed" ||
+      enrollment.paymentStatus === "paid"
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -87,38 +97,70 @@ export async function POST(request) {
       );
     }
 
-    if (!enrollment.amount || enrollment.amount <= 0) {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!keyId || !keySecret) {
+      console.error("RAZORPAY ENVIRONMENT VARIABLES ARE MISSING.");
+
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid enrollment amount.",
+          message: "Payment gateway is not configured.",
         },
-        { status: 400 }
+        { status: 500 }
       );
     }
 
-    const razorpay = new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret,
-    });
-
     const amountInPaise = Math.round(enrollment.amount * 100);
 
-    const receipt = `academy_${enrollment._id.toString()}`;
+    const receipt = `stackra_${enrollment._id
+      .toString()
+      .slice(-20)}_${Date.now().toString().slice(-8)}`;
 
-    const order = await razorpay.orders.create({
-      amount: amountInPaise,
-      currency: "INR",
-      receipt,
-      notes: {
-        enrollmentId: enrollment._id.toString(),
-        studentId: student.studentId,
-        courseSlug: enrollment.courseSlug,
-      },
-    });
+    const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
 
-    enrollment.orderId = order.id;
+    const razorpayResponse = await fetch(
+      "https://api.razorpay.com/v1/orders",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: amountInPaise,
+          currency: enrollment.currency || "INR",
+          receipt,
+          notes: {
+            studentId: dbStudent._id.toString(),
+            enrollmentId: enrollment._id.toString(),
+            courseSlug: enrollment.courseSlug,
+            courseTitle: enrollment.courseTitle,
+          },
+        }),
+      }
+    );
+
+    const razorpayData = await razorpayResponse.json();
+
+    if (!razorpayResponse.ok) {
+      console.error("RAZORPAY ORDER ERROR:", razorpayData);
+
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            razorpayData?.error?.description ||
+            "Unable to create Razorpay order.",
+        },
+        { status: 500 }
+      );
+    }
+
+    enrollment.orderId = razorpayData.id;
     enrollment.paymentStatus = "pending";
+    enrollment.status = "pending";
 
     await enrollment.save();
 
@@ -126,23 +168,17 @@ export async function POST(request) {
       {
         success: true,
         message: "Razorpay order created successfully.",
-        order: {
-          id: order.id,
-          amount: order.amount,
-          currency: order.currency,
-        },
-        enrollment: {
-          id: enrollment._id.toString(),
-          courseSlug: enrollment.courseSlug,
-          courseTitle: enrollment.courseTitle,
-          amount: enrollment.amount,
-        },
-        razorpayKeyId: keyId,
+        orderId: razorpayData.id,
+        amount: amountInPaise,
+        currency: enrollment.currency || "INR",
+        keyId,
+        enrollmentId: enrollment._id.toString(),
+        courseTitle: enrollment.courseTitle,
       },
-      { status: 201 }
+      { status: 200 }
     );
   } catch (error) {
-    console.error("RAZORPAY ORDER CREATION ERROR:", error);
+    console.error("ACADEMY CREATE PAYMENT ORDER ERROR:", error);
 
     return NextResponse.json(
       {
