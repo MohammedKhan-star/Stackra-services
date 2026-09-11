@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 
 import connectDB from "@/lib/mongodb";
 import Student from "@/models/Student";
+import { createAcademyToken } from "@/lib/academy-auth";
 
 export async function POST(request) {
   try {
@@ -23,9 +24,7 @@ export async function POST(request) {
 
     await connectDB();
 
-    const student = await Student.findOne({
-      email: email,
-    });
+    const student = await Student.findOne({ email });
 
     if (!student) {
       return NextResponse.json(
@@ -51,7 +50,7 @@ export async function POST(request) {
       return NextResponse.json(
         {
           success: false,
-          message: "This account has an invalid password record. Please register again.",
+          message: "Invalid account password. Please register again.",
         },
         { status: 401 }
       );
@@ -72,19 +71,33 @@ export async function POST(request) {
       );
     }
 
-    return NextResponse.json(
+    const studentData = {
+      id: student._id.toString(),
+      fullName: student.fullName,
+      email: student.email,
+      role: student.role,
+    };
+
+    const token = await createAcademyToken(studentData);
+
+    const response = NextResponse.json(
       {
         success: true,
         message: "Login successful.",
-        student: {
-          id: student._id.toString(),
-          fullName: student.fullName,
-          email: student.email,
-          role: student.role,
-        },
+        student: studentData,
       },
       { status: 200 }
     );
+
+    response.cookies.set("academy_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("ACADEMY LOGIN ERROR:", error);
 
